@@ -185,6 +185,31 @@
 
             // DOM Utility
               function el(id) { return document.getElementById(id); }
+              let appMessageTimer;
+
+              function showAppMessage(message, type = 'info', duration = 3000) {
+                  const banner = el('systemAlert');
+                  if (!banner) return;
+
+                  const themes = {
+                      success: { bg: '#d4edda', color: '#155724', border: '#28a745' },
+                      error: { bg: '#f8d7da', color: '#721c24', border: '#f5c6cb' },
+                      warning: { bg: '#fff3cd', color: '#856404', border: '#ffeeba' },
+                      info: { bg: '#cce5ff', color: '#004085', border: '#b8daff' }
+                  };
+
+                  const palette = themes[type] || themes.info;
+                  banner.style.display = 'block';
+                  banner.style.backgroundColor = palette.bg;
+                  banner.style.color = palette.color;
+                  banner.style.borderLeftColor = palette.border;
+                  banner.innerText = message;
+
+                  clearTimeout(appMessageTimer);
+                  if (duration > 0) {
+                      appMessageTimer = setTimeout(() => { banner.style.display = 'none'; }, duration);
+                  }
+              }
 
               // === CLOUD SYNC SETTINGS ===
               const JSONBIN_URL = "https://api.jsonbin.io/v3/b/69be8ac2aa77b81da905a456";
@@ -336,8 +361,14 @@
                 const n = el('contactName').value.trim();
                 const e = el('contactEmail').value.trim();
                 const r = el('contactRole').value;
-                if(!n || !e) return alert('Name and Email required!');
-                if(state.contacts.some(c => c.email.toLowerCase() === e.toLowerCase())) return alert('Email already exists!');
+                if(!n || !e) {
+                    showAppMessage('Name and Email are required.', 'error');
+                    return;
+                }
+                if(state.contacts.some(c => c.email.toLowerCase() === e.toLowerCase())) {
+                    showAppMessage('Email already exists.', 'warning');
+                    return;
+                }
                 
                 state.contacts.push({ id: Date.now(), name: n, email: e, role: r });
                 el('contactName').value = ''; el('contactEmail').value = ''; el('contactRole').value = 'none';
@@ -370,7 +401,7 @@
                 }
                 const isValid = /^([01]\d|2[0-3]):[0-5]\d$/.test(trimmed);
                 if (!isValid) {
-                    alert('Please enter time in HH:mm format, for example 16:35.');
+                    showAppMessage('Please enter time in HH:mm format, for example 16:35.', 'warning');
                     return;
                 }
                 task.time = trimmed;
@@ -538,7 +569,7 @@
                         await navigator.clipboard.write([new ClipboardItem({ 'text/html': htmlB, 'text/plain': txtB })]);
                         el('copyMsg').style.display = 'block';
                         setTimeout(() => { if(el('copyMsg')) el('copyMsg').style.display = 'none'; }, 4000);
-                    } catch (e) { alert('Failed to auto-copy! Select the text below and hold Ctrl+C manually.'); }
+                    } catch (e) { showAppMessage('Failed to auto-copy. Please copy manually with Ctrl+C.', 'error', 4500); }
                 };
 
                 el('copyHtmlBtn').addEventListener('click', docopy);
