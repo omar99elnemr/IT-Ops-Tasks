@@ -179,47 +179,109 @@
             };
 
             // DOM Utility
-            function el(id) { return document.getElementById(id); }
+              function el(id) { return document.getElementById(id); }
 
-            // Core persistence
-            function saveState() {
-                try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } 
-                catch(err) { console.warn("Could not save to LocalStorage: ", err); }
-            }
+              // === CLOUD SYNC SETTINGS ===
+              const JSONBIN_URL = "https://api.jsonbin.io/v3/b/69be8ac2aa77b81da905a456";
+              const JSONBIN_KEY = "$2a$10$BZHDs7xI.EreDDh1nb.YcOpZ.67.MqtPAwmbUTe1HvWK1NgcWhep.";
+              let saveTimeout;
 
-            function loadState() {
-                try {
-                    const saved = localStorage.getItem(STORAGE_KEY);
-                    if (saved) {
-                        const parsed = JSON.parse(saved);
-                        if(parsed.userName) state.userName = parsed.userName;
-                        if(parsed.shift) state.shift = parsed.shift;
-                        if(parsed.contacts) state.contacts = parsed.contacts;
-                        if(parsed.fixedTasks) state.fixedTasks = parsed.fixedTasks;
-                        if(parsed.dynamicTasks) state.dynamicTasks = parsed.dynamicTasks;
-                    }
-                } catch(err) {
-                    console.warn("Cleared corrupted cache bypass!", err);
-                    localStorage.removeItem(STORAGE_KEY);
-                }
-                
-                // Set default static element values to match state
-                if(el('userName')) el('userName').value = state.userName;
-                if(el('shiftSelect')) el('shiftSelect').value = state.shift;
-                if(el('datePicker')) el('datePicker').valueAsDate = new Date();
-                
-                // Success banner
-                const alertBanner = el('systemAlert');
-                if(alertBanner) {
-                    alertBanner.style.backgroundColor = '#d4edda';
-                    alertBanner.style.borderLeftColor = '#28a745';
-                    alertBanner.style.color = '#155724';
-                    alertBanner.innerHTML = '✅ System loaded perfectly! (Completely Clean State v3.0)';
-                    setTimeout(() => { alertBanner.style.display = 'none'; }, 3500);
-                }
-            }
+              function saveState() {
+                  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e){}
 
-            // === CONTACTS ===
+                  clearTimeout(saveTimeout);
+                  const alert = el('systemAlert');
+                  if(alert) {
+                      alert.style.display = 'block';
+                      alert.style.backgroundColor = '#fff3cd';
+                      alert.style.color = '#856404';
+                      alert.innerText = '⏳ Syncing...';
+                  }
+
+                  saveTimeout = setTimeout(async () => {
+                      try {
+                          const res = await fetch(JSONBIN_URL, {
+                              method: 'PUT',
+                              headers: {
+                                  'Content-Type': 'application/json',
+                                  'X-Access-Key': JSONBIN_KEY
+                              },
+                              body: JSON.stringify(state)
+                          });
+                          if (res.ok && alert) {
+                              alert.style.backgroundColor = '#d4edda';
+                              alert.style.color = '#155724';
+                              alert.innerText = '✅ Synced!';
+                              setTimeout(() => { alert.style.display = 'none'; }, 2000);
+                          }
+                      } catch(err) {
+                          if(alert) {
+                              alert.style.backgroundColor = '#f8d7da';
+                              alert.style.color = '#721c24';
+                              alert.innerText = '⚠️ Saved Locally Only';
+                              setTimeout(() => { alert.style.display = 'none'; }, 3000);
+                          }
+                      }
+                  }, 1500); 
+              }
+
+              async function loadState() {
+                  const alertBanner = el('systemAlert');
+                  if(alertBanner) {
+                      alertBanner.style.display = 'block';
+                      alertBanner.style.backgroundColor = '#cce5ff';
+                      alertBanner.style.color = '#004085';
+                      alertBanner.innerText = '🔄 Loading Cloud Data...';
+                  }
+
+                  try {
+                      const res = await fetch(JSONBIN_URL + '?meta=false', {
+                          headers: { 'X-Access-Key': JSONBIN_KEY }
+                      });
+                      if (res.ok) {
+                          const data = await res.json();
+                          if (data && typeof data === 'object') {
+                              if(data.userName !== undefined) state.userName = data.userName;
+                              if(data.shift !== undefined) state.shift = data.shift;
+                              if(data.contacts !== undefined) state.contacts = data.contacts;
+                              if(data.fixedTasks !== undefined) state.fixedTasks = data.fixedTasks;
+                              if(data.dynamicTasks !== undefined) state.dynamicTasks = data.dynamicTasks;
+                              localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+                              
+                              if(alertBanner) {
+                                  alertBanner.style.backgroundColor = '#d4edda';
+                                  alertBanner.style.color = '#155724';
+                                  alertBanner.innerText = '✅ Loaded from Cloud!';
+                                  setTimeout(() => { alertBanner.style.display = 'none'; }, 2000);
+                              }
+                          }
+                      } else throw new Error();
+                  } catch(err) {
+                      try {
+                          const saved = localStorage.getItem(STORAGE_KEY);
+                          if (saved) {
+                              const parsed = JSON.parse(saved);
+                              if(parsed.userName) state.userName = parsed.userName;
+                              if(parsed.shift) state.shift = parsed.shift;
+                              if(parsed.contacts) state.contacts = parsed.contacts;
+                              if(parsed.fixedTasks) state.fixedTasks = parsed.fixedTasks;
+                              if(parsed.dynamicTasks) state.dynamicTasks = parsed.dynamicTasks;
+                          }
+                      } catch(e) {}
+                      if(alertBanner) {
+                          alertBanner.style.backgroundColor = '#f8d7da';
+                          alertBanner.style.color = '#721c24';
+                          alertBanner.innerText = '⚠️ Local Data (Offline)';
+                          setTimeout(() => { alertBanner.style.display = 'none'; }, 2000);
+                      }
+                  }
+
+                  if(el('userName')) el('userName').value = state.userName;
+                  if(el('shiftSelect')) el('shiftSelect').value = state.shift;
+                  if(el('datePicker')) el('datePicker').valueAsDate = new Date();
+              }
+              
+              // === CONTACTS ===
             function renderContacts() {
                 const ctn = el('contactsContainer');
                 if(!ctn) return;
@@ -446,21 +508,23 @@
             }
 
             // Boot Initialization
-            try {
-                loadState();
-                renderContacts();
-                renderFixedTasks();
-                renderDynamicTasks();
-                attachEvents();
-            } catch(e) {
-                const errBox = el('systemAlert');
-                if(errBox) {
-                    errBox.style.backgroundColor='#f8d7da'; errBox.style.color='#721c24'; 
-                    errBox.innerText = "Fatal load error. Resetting storage. Please refresh.";
-                    localStorage.clear();
-                }
-            }
-        });
-    </script>
+              try {
+                  loadState().then(() => {
+                      if(typeof renderContacts === 'function') renderContacts();
+                      if(typeof renderFixedTasks === 'function') renderFixedTasks();
+                      if(typeof renderDynamicTasks === 'function') renderDynamicTasks();
+                      if(typeof attachEvents === 'function') attachEvents();
+                  });
+              } catch(e) {
+                  const errBox = el('systemAlert');
+                  if(errBox) {
+                      errBox.style.backgroundColor='#f8d7da';
+                      errBox.style.color='#721c24';
+                      errBox.innerText = "Fatal load error. Resetting storage. Please refresh.";
+                      localStorage.clear();
+                  }
+              }
+          });
+      </script>
 </body>
 </html>
