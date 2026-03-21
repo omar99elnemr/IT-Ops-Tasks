@@ -664,7 +664,7 @@
                 html += `</ul>`;
 
                 const doneDynamics = state.dynamicTasks.filter(t => t.status === 'Completed');
-                html += `<p><strong>2. Executed Tasks & Incidents:</strong></p>`;
+                html += `<p><strong>2. Addressed Tasks and Incidents:</strong></p>`;
                 if(doneDynamics.length > 0) {
                     html += `<ol>`; doneDynamics.forEach(t => { html += `<li>${t.title}${t.time ? ` (${t.time})` : ''}</li>`; }); html += `</ol>`;
                 } else { html += `<p style="margin-left: 20px;"><em>Operations ran smoothly until the end of the shift.</em></p>`; }
