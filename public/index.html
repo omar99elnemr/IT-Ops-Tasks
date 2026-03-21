@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>IT Ops Shift Handover</title>
+    <style>
+        :root { --primary: #005a9e; --secondary: #f4f6f9; --text: #333; --border: #ddd; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 15px; background-color: var(--secondary); margin: 0; color: var(--text); }
+        .container { max-width: 900px; margin: auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); box-sizing: border-box; }
+        
+        h1, h2, h3 { color: var(--primary); border-bottom: 2px solid var(--secondary); padding-bottom: 8px; margin-bottom: 15px;}
+        h1 { font-size: 1.5em; text-align: center; }
+        .section { margin-bottom: 30px; }
+        
+        .flex { display: flex; gap: 10px; align-items: center; }
+        .flex-grow { flex-grow: 1; min-width: 0; } /* min-width 0 allows text ellipsis if needed */
+        .flex-wrap { display: flex; flex-wrap: wrap; gap: 10px; }
+        
+        input, select, textarea { padding: 10px 12px; border: 1px solid var(--border); border-radius: 4px; box-sizing: border-box; width: 100%; font-size: 1em; }
+        input:focus, select:focus { outline: none; border-color: var(--primary); }
+        
+        button { padding: 10px 15px; cursor: pointer; border: none; border-radius: 4px; background-color: var(--primary); color: white; transition: background-color 0.2s; font-weight: 500; font-size: 1em; white-space: nowrap; }
+        button:hover { background-color: #004578; }
+        .btn-outline { background-color: transparent; color: var(--primary); border: 1px solid var(--primary); }
+        .btn-outline:hover { background-color: #f0f8ff; }
+        .btn-danger { background-color: transparent; color: #dc3545; border: 1px solid #dc3545; }
+        .btn-danger:hover { background-color: #fff5f5; }
+        .btn-success { background-color: #28a745; color: white;}
+        .btn-success:hover { background-color: #218838; }
+        .btn-icon { padding: 6px 10px; font-size: 0.9em; }
+        
+        /* Contacts Section */
+        .contact-card { background: #f8f9fa; border: 1px solid #e9ecef; padding: 10px; border-radius: 6px; display: flex; align-items: center; gap: 10px; min-width: 250px; flex-grow: 1; flex-basis: 30%; }
+        .contact-info { flex-grow: 1; display: flex; flex-direction: column; }
+        .contact-name { font-weight: bold; font-size: 0.9em; }
+        .contact-email { font-size: 0.8em; color: #666; }
+        .role-badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 0.75em; font-weight: bold; color: white; background: #6c757d;}
+        .role-badge.to { background: #007bff; }
+        .role-badge.cc { background: #17a2b8; }
+        
+        /* Task Rows */
+        .task-list { list-style: none; padding: 0; margin: 0; }
+        .task-row { display: flex; align-items: center; justify-content: space-between; padding: 12px; border-bottom: 1px solid #f0f0f0; background: #fff; gap: 10px; }
+        .task-row:hover { background-color: #fafafa; }
+        .task-content { display: flex; flex-direction: column; gap: 4px; flex-grow: 1; }
+        .task-title { font-weight: 500; font-size: 1.05em; }
+        .task-meta { font-size: 0.85em; color: #666; }
+        .task-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+        
+        .status-badge { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 0.8em; font-weight: bold; text-align: center;}
+        .status-completed { background: #e6f4ea; color: #28a745; border: 1px solid #28a745;}
+        .status-pending { background: #fff3cd; color: #856404; border: 1px solid #856404;}
+        .status-handover { background: #cce5ff; color: #004085; border: 1px solid #004085;}
+
+        /* General UI */
+        .card { background: #fafafa; padding: 15px; border-radius: 6px; border: 1px solid #eee; margin-bottom: 15px; }
+        .alert { border-left: 4px solid #6c757d; margin-bottom: 20px; font-size: 0.9em; padding: 10px; background: #e2e3e5; }
+        #emailPreview { font-family: 'Calibri', sans-serif; background: white; padding: 20px; border: 1px solid #ddd; border-radius: 4px; margin-top: 15px; min-height: 200px; overflow-x: auto; font-size: 14pt; }
+        .strikethrough { text-decoration: line-through; color: #888; }
+        
+        /* Mobile Responsiveness */
+        @media (max-width: 650px) {
+            .container { padding: 15px; width: 100%; border-radius: 0; box-shadow: none; }
+            .flex-mobile-col { flex-direction: column; align-items: stretch; gap: 12px; }
+            .task-row { flex-direction: column; align-items: stretch; }
+            .task-actions { justify-content: space-between; margin-top: 6px; }
+            .task-actions button { flex-grow: 1; padding: 8px; font-size: 0.9em;}
+            .contact-card { flex-basis: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>IT Operations Handover</h1>
+
+        <!-- Settings Section -->
+        <div class="section">
+            <button id="toggleSettingsBtn" class="btn-outline" style="width: 100%;">⚙️ Show/Hide Profile & Contacts</button>
+            
+            <div id="settingsPanel" style="display:none; margin-top: 15px;">
+                <div class="card">
+                    <h3>My Setup</h3>
+                    <div class="flex flex-mobile-col" style="margin-bottom: 15px;">
+                        <div class="flex-grow">
+                            <label style="font-size: 0.85em; color:#555;">My Name</label>
+                            <input type="text" id="userName" placeholder="e.g. Gerges Hani">
+                        </div>
+                        <div class="flex-grow">
+                            <label style="font-size: 0.85em; color:#555;">Current Shift</label>
+                            <select id="shiftSelect">
+                                <option value="Morning (09:00 - 17:00)">Morning (09:00 - 17:00)</option>
+                                <option value="Afternoon (14:00 - 23:00)">Afternoon (14:00 - 23:00)</option>
+                            </select>
+                        </div>
+                        <div class="flex-grow">
+                            <label style="font-size: 0.85em; color:#555;">Date</label>
+                            <input type="date" id="datePicker">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Contacts Directory</h3>
+                    <p style="font-size: 0.85em; color: #666; margin-top: 0; margin-bottom: 15px;">Add emails. You can quickly switch them between 'TO' and 'CC' when preparing reports.</p>
+                    
+                    <div class="flex flex-mobile-col" style="margin-bottom: 15px;">
+                        <input type="text" id="contactName" placeholder="Name (e.g. Eng. Malak)" class="flex-grow">
+                        <input type="email" id="contactEmail" placeholder="Email Address" class="flex-grow">
+                        <select id="contactRole" style="width: auto;">
+                            <option value="none">-- Set Role --</option>
+                            <option value="to">TO (Direct)</option>
+                            <option value="cc">CC (Carbon Copy)</option>
+                        </select>
+                        <button id="addContactBtn">Add</button>
+                    </div>
+
+                    <div id="contactsContainer" class="flex-wrap">
+                        <!-- Contacts pop here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Routine Tasks -->
+        <div class="section">
+            <h3 style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;">
+                1. Routine Operations
+                <span style="font-size: 0.55em; color: #777; font-weight: normal;">(Check off daily tasks)</span>
+            </h3>
+            
+            <div class="card flex flex-mobile-col" style="margin-bottom: 15px; padding: 10px;">
+                <input type="text" id="newFixedTaskInput" placeholder="Add new permanent routine task..." class="flex-grow">
+                <button id="addFixedTaskBtn">Add Task</button>
+            </div>
+            
+            <ul id="fixedTasksList" class="task-list">
+                <!-- Dynamically populated -->
+            </ul>
+        </div>
+
+        <!-- Dynamic / Ad-hoc Tasks -->
+        <div class="section">
+            <h3 style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;">
+                2. Ad-Hoc / Handover Log
+                <span style="font-size: 0.55em; color: #777; font-weight: normal;">(Record new tasks)</span>
+            </h3>
+
+            <div class="card flex flex-mobile-col" style="margin-bottom: 15px; padding: 10px;">
+                <input type="text" id="newTaskDesc" placeholder="Task description... (e.g. Setup mobile C19)" class="flex-grow">
+                <div class="flex flex-grow" style="gap:10px;">
+                    <select id="newTaskStatus" style="flex-grow:1;">
+                        <option value="Completed">Completed Today</option>
+                        <option value="Pending">Pending (Next Day)</option>
+                        <option value="Handover">Handed Over</option>
+                    </select>
+                    <button id="addDynamicTaskBtn">Record</button>
+                </div>
+            </div>
+            
+            <ul id="dynamicTasksList" class="task-list">
+                <!-- Dynamically populated list -->
+            </ul>
+        </div>
+
+        <!-- Final Report -->
+        <div class="section">
+            <h3>3. Generate End-of-Shift Email</h3>
+            
+            <button id="generateReportBtn" style="width: 100%; font-size: 1.1em; padding: 12px;">Generate Report Preview</button>
+            
+            <div id="reportContainer" style="display: none; margin-top:20px;">
+                <div class="flex flex-mobile-col" style="gap:10px; margin-bottom: 15px;">
+                    <button id="openOutlookBtn" class="btn-success flex-grow" style="padding: 12px; font-size: 1.1em;">1. Click Here: Open Outlook Draft</button>
+                    <button id="copyHtmlBtn" class="btn-outline flex-grow" style="padding: 12px; font-size: 1.1em;">2. If needed: Copy to Clipboard to Paste</button>
+                </div>
+                <div id="copyMsg" style="color: #28a745; font-weight: bold; text-align: center; display:none; margin-top:-10px; margin-bottom:10px;">Report Copied Successfully! Now hit Ctrl+V in Outlook.</div>
+                
+                <div id="emailPreview"></div>
+            </div>
+        </div>
+
+    </div>
+    <script src="app.js?v=2"></script>
+</body>
+</html>
