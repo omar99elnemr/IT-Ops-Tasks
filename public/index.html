@@ -52,7 +52,7 @@
         
         .status-badge { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 0.8em; font-weight: bold; text-align: center;}
         .status-completed { background: #e6f4ea; color: #28a745; border: 1px solid #28a745;}
-        .status-pending { background: #fff3cd; color: #856404; border: 1px solid #856404;}
+        .status-inprogress { background: #fff3cd; color: #856404; border: 1px solid #856404;}
         .status-handover { background: #cce5ff; color: #004085; border: 1px solid #004085;}
 
         .card { background: #fafafa; padding: 15px; border-radius: 6px; border: 1px solid #eee; margin-bottom: 15px; }
@@ -147,7 +147,7 @@
                 <div class="flex flex-grow" style="gap:10px;">
                     <select id="newTaskStatus" style="flex-grow:1;">
                         <option value="Completed">Completed Today</option>
-                        <option value="Pending">Pending (Next Day)</option>
+                        <option value="InProgress">In Progress (Next Day)</option>
                         <option value="Handover">Handed Over</option>
                     </select>
                     <button id="addDynamicTaskBtn">Record</button>
@@ -508,6 +508,19 @@
                 return timeValue ? timeValue : 'No time recorded';
             }
 
+            function normalizeTaskStatus(task) {
+                if (task.status === 'Pending') task.status = 'InProgress';
+                return task.status;
+            }
+
+            function getStatusLabel(status) {
+                return status === 'InProgress' ? 'In Progress' : status;
+            }
+
+            function getStatusClass(status) {
+                return status === 'InProgress' ? 'inprogress' : String(status || '').toLowerCase();
+            }
+
             async function editTaskTime(task) {
                 const result = await showInputDialog('Edit time (HH:mm), leave empty to clear time:', task.time || '', 'Edit Task Time');
                 if (!result.confirmed) return;
@@ -543,7 +556,7 @@
                     li.innerHTML = `
                         <div class="task-content">
                             <span class="task-title ${task.done ? 'strikethrough' : ''}">${task.title}</span>
-                            <span class="task-meta">${task.done ? '✅ Completed ' + formatMetaTime(task.time) : '⏳ Pending'}</span>
+                            <span class="task-meta">${task.done ? '✅ Completed ' + formatMetaTime(task.time) : '⏳ In Progress'}</span>
                         </div>
                     `;
                     const actions = document.createElement('div');
@@ -589,11 +602,12 @@
                 if(!list) return;
                 list.innerHTML = '';
                 state.dynamicTasks.forEach(task => {
+                    normalizeTaskStatus(task);
                     const li = document.createElement('li'); li.className = 'task-row';
                     li.innerHTML = `
                         <div class="task-content">
                             <div class="flex" style="flex-wrap: wrap;">
-                                <span class="status-badge status-${task.status.toLowerCase()}">${task.status}</span>
+                                <span class="status-badge status-${getStatusClass(task.status)}">${getStatusLabel(task.status)}</span>
                                 <span class="task-title">${task.title}</span>
                             </div>
                             <span class="task-meta">Logged at ${formatMetaTime(task.time)}</span>
@@ -658,9 +672,12 @@
                 const pendFixed = state.fixedTasks.filter(t => !t.done);
                 const pendDynamics = state.dynamicTasks.filter(t => t.status !== 'Completed');
                 if (pendFixed.length > 0 || pendDynamics.length > 0) {
-                    html += `<br><p><strong>Handover & Pending:</strong></p><ul>`;
-                    pendDynamics.forEach(t => { html += `<li><strong>[${t.status.toUpperCase()}]</strong> ${t.title}</li>`; });
-                    pendFixed.forEach(t => { html += `<li>[PENDING ROUTINE] ${t.title}</li>`; });
+                    html += `<br><p><strong>Handover & In Progress:</strong></p><ul>`;
+                    pendDynamics.forEach(t => {
+                        const statusLabel = getStatusLabel(normalizeTaskStatus(t)).toUpperCase();
+                        html += `<li><strong>[${statusLabel}]</strong> ${t.title}</li>`;
+                    });
+                    pendFixed.forEach(t => { html += `<li>[IN PROGRESS ROUTINE] ${t.title}</li>`; });
                     html += `</ul>`;
                 }
 
