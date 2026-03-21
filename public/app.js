@@ -100,13 +100,40 @@ document.addEventListener('DOMContentLoaded', () => {
         if (saved) {
             try {
                 const parsed = JSON.parse(saved);
-                // Keep the default array if parsed array doesn't exist
+                
                 if(parsed.userName) state.userName = parsed.userName;
                 if(parsed.shift) state.shift = parsed.shift;
-                if(parsed.contacts) state.contacts = parsed.contacts;
-                if(parsed.fixedTasks) state.fixedTasks = parsed.fixedTasks;
-                if(parsed.dynamicTasks) state.dynamicTasks = parsed.dynamicTasks;
-            } catch (e) { console.error('Failed to parse local state'); }
+                
+                // Sanitize Contacts
+                if(parsed.contacts && Array.isArray(parsed.contacts)) {
+                    state.contacts = parsed.contacts.map((c, i) => ({
+                        id: c.id || Date.now() + i,
+                        name: c.name || c.email || 'Saved Contact',
+                        email: c.email || '',
+                        role: c.role || 'none'
+                    }));
+                }
+                
+                // Sanitize Fixed Tasks
+                if(parsed.fixedTasks && Array.isArray(parsed.fixedTasks)) {
+                    state.fixedTasks = parsed.fixedTasks.map((t, i) => {
+                        if (typeof t === 'string') return { id: Date.now() + i, title: t, done: false, time: null };
+                        return {
+                            id: t.id || Date.now() + i,
+                            title: t.title || t.name || 'Untitled Task',
+                            done: t.done || false,
+                            time: t.time || null
+                        };
+                    });
+                }
+                
+                if(parsed.dynamicTasks && Array.isArray(parsed.dynamicTasks)) {
+                    state.dynamicTasks = parsed.dynamicTasks;
+                }
+            } catch (e) {
+                console.error('Failed to parse local state, resetting state.', e);
+                localStorage.removeItem('itOpsState'); // Clear corrupted state
+            }
         }
         els.userName.value = state.userName;
         els.shiftSelect.value = state.shift;
