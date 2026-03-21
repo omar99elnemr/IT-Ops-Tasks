@@ -83,11 +83,11 @@
     <div class="container" id="appRoot">
         <h1>IT Operations Handover</h1>
 
-        <div class="alert" id="systemAlert">System Starting... If you see this, wait a moment.</div>
+        <div class="alert" id="systemAlert">System is starting. Please wait a moment.</div>
 
         <!-- Settings Section -->
         <div class="section">
-            <button id="toggleSettingsBtn" class="btn-outline" style="width: 100%;">⚙️ Show/Hide Profile & Contacts</button>
+            <button id="toggleSettingsBtn" class="btn-outline" style="width: 100%;">⚙️ Show/Hide Profile and Contacts</button>
             <div id="settingsPanel" style="display:none; margin-top: 15px;">
                 <div class="card">
                     <h3>My Setup</h3>
@@ -140,7 +140,7 @@
         <!-- Dynamic Tasks -->
         <div class="section">
             <h3 style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;">
-                2. Ad-Hoc / Handover Log <span style="font-size: 0.55em; color: #777; font-weight: normal;">(Record new tasks)</span>
+                2. Ad-Hoc / Handover Log <span style="font-size: 0.55em; color: #777; font-weight: normal;">(Record new entries)</span>
             </h3>
             <div class="card flex flex-mobile-col" style="margin-bottom: 15px; padding: 10px;">
                 <input type="text" id="newTaskDesc" placeholder="Task description... (e.g. Setup mobile C19)" class="flex-grow">
@@ -163,7 +163,7 @@
             <div id="reportContainer" style="display: none; margin-top:20px;">
                 <div class="flex flex-mobile-col" style="gap:10px; margin-bottom: 15px;">
                     <button id="openOutlookBtn" class="btn-success flex-grow" style="padding: 12px; font-size: 1.1em;">Open Outlook Draft</button>
-                    <button id="copyHtmlBtn" class="btn-outline flex-grow" style="padding: 12px; font-size: 1.1em;">Copy text to Paste manually</button>
+                    <button id="copyHtmlBtn" class="btn-outline flex-grow" style="padding: 12px; font-size: 1.1em;">Copy Text for Manual Paste</button>
                 </div>
                 <div id="copyMsg" style="color: #28a745; font-weight: bold; text-align: center; display:none; margin-top:-10px; margin-bottom:10px;">Report Copied Successfully! Now hit Ctrl+V in Outlook.</div>
                 <div id="emailPreview"></div>
@@ -360,7 +360,7 @@
                           if(alert) {
                               alert.style.backgroundColor = '#f8d7da';
                               alert.style.color = '#721c24';
-                              alert.innerText = '⚠️ Saved Locally Only';
+                              alert.innerText = '⚠️ Saved locally only';
                               setTimeout(() => { alert.style.display = 'none'; }, 3000);
                           }
                       }
@@ -460,7 +460,7 @@
                     
                     const del = document.createElement('button');
                     del.className = 'btn-danger btn-icon';
-                    del.innerText = 'Del';
+                    del.innerText = 'Delete';
                     del.onclick = async () => {
                         const confirmed = await showConfirmDialog('Remove this contact?', 'Delete Contact');
                         if (confirmed) {
@@ -658,7 +658,7 @@
                 html += `<p>After greetings, kindly find below the summary of today’s completed operational tasks (<strong>${_date}</strong>).</p>`;
 
                 const doneFixed = state.fixedTasks.filter(t => t.done);
-                html += `<p><strong>1. Routine Verification completed:</strong></p><ul>`;
+                html += `<p><strong>1. Routine verification completed:</strong></p><ul>`;
                 if(doneFixed.length > 0) { doneFixed.forEach(t => { html += `<li>${t.title}${t.time ? ` (${t.time})` : ''}</li>`; }); } 
                 else { html += `<li><em>No routine tasks signed off.</em></li>`; }
                 html += `</ul>`;
@@ -667,7 +667,7 @@
                 html += `<p><strong>2. Executed Tasks & Incidents:</strong></p>`;
                 if(doneDynamics.length > 0) {
                     html += `<ol>`; doneDynamics.forEach(t => { html += `<li>${t.title}${t.time ? ` (${t.time})` : ''}</li>`; }); html += `</ol>`;
-                } else { html += `<p style="margin-left: 20px;"><em>Smooth Operation till end of shift.</em></p>`; }
+                } else { html += `<p style="margin-left: 20px;"><em>Operations ran smoothly until the end of the shift.</em></p>`; }
 
                 const pendFixed = state.fixedTasks.filter(t => !t.done);
                 const pendDynamics = state.dynamicTasks.filter(t => t.status !== 'Completed');
@@ -728,7 +728,7 @@
                     const TO = state.contacts.filter(c => c.role === 'to').map(c => c.email).join(';');
                     const CC = state.contacts.filter(c => c.role === 'cc').map(c => c.email).join(';');
                     const d = el('datePicker').valueAsDate || new Date();
-                    const subj = encodeURIComponent(`Completed Tasks for operation today ${d.getDate()}-${d.getMonth() + 1}-${d.getFullYear()}`);
+                    const subj = encodeURIComponent(`Completed operational tasks for today ${d.getDate()}-${d.getMonth() + 1}-${d.getFullYear()}`);
                     
                     await docopy();
                     window.location.href = `mailto:${TO}?cc=${CC}&subject=${subj}`;
