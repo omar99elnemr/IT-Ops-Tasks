@@ -625,7 +625,15 @@
 
                     const delBtn = document.createElement('button');
                     delBtn.className = 'btn-danger'; delBtn.innerText = 'Del';
-                    delBtn.onclick = () => { state.dynamicTasks = state.dynamicTasks.filter(t => t.id !== task.id); saveState(); renderDynamicTasks(); };
+                    delBtn.onclick = async () => {
+                        const confirmed = await showConfirmDialog('Remove this ad-hoc task?', 'Delete Task');
+                        if (confirmed) {
+                            state.dynamicTasks = state.dynamicTasks.filter(t => t.id !== task.id);
+                            saveState();
+                            renderDynamicTasks();
+                            showAppMessage('Task removed.', 'success');
+                        }
+                    };
 
                     const editTimeBtn = document.createElement('button');
                     editTimeBtn.className = 'btn-outline';
