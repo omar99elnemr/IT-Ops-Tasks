@@ -92,6 +92,10 @@
                         </div>
                         <div class="flex-grow"><label style="font-size: 0.85em; color:#555;">Date</label><input type="date" id="datePicker"></div>
                     </div>
+                    <div class="flex" style="margin-top: 10px; align-items: center;">
+                        <input type="checkbox" id="timeRecordingEnabled" style="width: auto; margin-right: 8px;">
+                        <label for="timeRecordingEnabled" style="font-size: 0.9em; color:#444;">Enable automatic time recording</label>
+                    </div>
                 </div>
 
                 <div class="card">
@@ -168,6 +172,7 @@
             let state = {
                 userName: '',
                 shift: 'Morning (09:00 - 17:00)',
+                timeRecordingEnabled: true,
                 contacts: [],
                 fixedTasks: [
                     { id: 1, title: 'Checked all IDF rooms', done: false, time: null },
@@ -243,6 +248,7 @@
                           if (data && typeof data === 'object') {
                               if(data.userName !== undefined) state.userName = data.userName;
                               if(data.shift !== undefined) state.shift = data.shift;
+                              if(data.timeRecordingEnabled !== undefined) state.timeRecordingEnabled = !!data.timeRecordingEnabled;
                               if(data.contacts !== undefined) state.contacts = data.contacts;
                               if(data.fixedTasks !== undefined) state.fixedTasks = data.fixedTasks;
                               if(data.dynamicTasks !== undefined) state.dynamicTasks = data.dynamicTasks;
@@ -263,6 +269,7 @@
                               const parsed = JSON.parse(saved);
                               if(parsed.userName) state.userName = parsed.userName;
                               if(parsed.shift) state.shift = parsed.shift;
+                              if(parsed.timeRecordingEnabled !== undefined) state.timeRecordingEnabled = !!parsed.timeRecordingEnabled;
                               if(parsed.contacts) state.contacts = parsed.contacts;
                               if(parsed.fixedTasks) state.fixedTasks = parsed.fixedTasks;
                               if(parsed.dynamicTasks) state.dynamicTasks = parsed.dynamicTasks;
@@ -279,6 +286,7 @@
                   if(el('userName')) el('userName').value = state.userName;
                   if(el('shiftSelect')) el('shiftSelect').value = state.shift;
                   if(el('datePicker')) el('datePicker').valueAsDate = new Date();
+                  if(el('timeRecordingEnabled')) el('timeRecordingEnabled').checked = !!state.timeRecordingEnabled;
               }
               
               // === CONTACTS ===
@@ -341,6 +349,36 @@
                 return new Intl.DateTimeFormat('en-EG', { timeZone: 'Africa/Cairo', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date());
             }
 
+            function getRecordedTime() {
+                return state.timeRecordingEnabled ? formatTime() : null;
+            }
+
+            function formatMetaTime(timeValue) {
+                return timeValue ? timeValue : 'No time recorded';
+            }
+
+            function editTaskTime(task) {
+                const value = prompt('Edit time (HH:mm), leave empty to clear time:', task.time || '');
+                if (value === null) return;
+                const trimmed = value.trim();
+                if (!trimmed) {
+                    task.time = null;
+                    saveState();
+                    renderFixedTasks();
+                    renderDynamicTasks();
+                    return;
+                }
+                const isValid = /^([01]\d|2[0-3]):[0-5]\d$/.test(trimmed);
+                if (!isValid) {
+                    alert('Please enter time in HH:mm format, for example 16:35.');
+                    return;
+                }
+                task.time = trimmed;
+                saveState();
+                renderFixedTasks();
+                renderDynamicTasks();
+            }
+
             function renderFixedTasks() {
                 const list = el('fixedTasksList');
                 if(!list) return;
@@ -351,7 +389,7 @@
                     li.innerHTML = `
                         <div class="task-content">
                             <span class="task-title ${task.done ? 'strikethrough' : ''}">${task.title}</span>
-                            <span class="task-meta">${task.done ? '✅ Completed ' + task.time : '⏳ Pending'}</span>
+                            <span class="task-meta">${task.done ? '✅ Completed ' + formatMetaTime(task.time) : '⏳ Pending'}</span>
                         </div>
                     `;
                     const actions = document.createElement('div');
@@ -360,13 +398,18 @@
                     const doneBtn = document.createElement('button');
                     doneBtn.className = task.done ? 'btn-outline' : 'btn-success';
                     doneBtn.innerText = task.done ? 'Undo' : 'Mark Done';
-                    doneBtn.onclick = () => { task.done = !task.done; task.time = task.done ? formatTime() : null; saveState(); renderFixedTasks(); };
+                    doneBtn.onclick = () => { task.done = !task.done; task.time = task.done ? getRecordedTime() : null; saveState(); renderFixedTasks(); };
+
+                    const editTimeBtn = document.createElement('button');
+                    editTimeBtn.className = 'btn-outline';
+                    editTimeBtn.innerText = 'Edit Time';
+                    editTimeBtn.onclick = () => editTaskTime(task);
                     
                     const delBtn = document.createElement('button');
                     delBtn.className = 'btn-danger'; delBtn.innerText = 'X';
                     delBtn.onclick = () => { if(confirm("Remove?")) { state.fixedTasks = state.fixedTasks.filter(t => t.id !== task.id); saveState(); renderFixedTasks(); } };
 
-                    actions.appendChild(doneBtn); actions.appendChild(delBtn);
+                    actions.appendChild(doneBtn); actions.appendChild(editTimeBtn); actions.appendChild(delBtn);
                     li.appendChild(actions); list.appendChild(li);
                 });
             }
@@ -391,7 +434,7 @@
                                 <span class="status-badge status-${task.status.toLowerCase()}">${task.status}</span>
                                 <span class="task-title">${task.title}</span>
                             </div>
-                            <span class="task-meta">Logged at ${task.time}</span>
+                            <span class="task-meta">Logged at ${formatMetaTime(task.time)}</span>
                         </div>
                     `;
                     const actions = document.createElement('div'); actions.className = 'task-actions';
@@ -408,7 +451,12 @@
                     delBtn.className = 'btn-danger'; delBtn.innerText = 'Del';
                     delBtn.onclick = () => { state.dynamicTasks = state.dynamicTasks.filter(t => t.id !== task.id); saveState(); renderDynamicTasks(); };
 
-                    actions.appendChild(makeRtn); actions.appendChild(delBtn);
+                    const editTimeBtn = document.createElement('button');
+                    editTimeBtn.className = 'btn-outline';
+                    editTimeBtn.innerText = 'Edit Time';
+                    editTimeBtn.onclick = () => editTaskTime(task);
+
+                    actions.appendChild(makeRtn); actions.appendChild(editTimeBtn); actions.appendChild(delBtn);
                     li.appendChild(actions); list.appendChild(li);
                 });
             }
@@ -417,7 +465,7 @@
                 const desc = el('newTaskDesc').value.trim();
                 const stat = el('newTaskStatus').value;
                 if(!desc) return;
-                state.dynamicTasks.push({ id: Date.now(), title: desc, status: stat, time: formatTime() });
+                state.dynamicTasks.push({ id: Date.now(), title: desc, status: stat, time: getRecordedTime() });
                 el('newTaskDesc').value = ''; saveState(); renderDynamicTasks();
             }
 
@@ -435,14 +483,14 @@
 
                 const doneFixed = state.fixedTasks.filter(t => t.done);
                 html += `<p><strong>1. Routine Verification completed:</strong></p><ul>`;
-                if(doneFixed.length > 0) { doneFixed.forEach(t => { html += `<li>${t.title} (${t.time})</li>`; }); } 
+                if(doneFixed.length > 0) { doneFixed.forEach(t => { html += `<li>${t.title}${t.time ? ` (${t.time})` : ''}</li>`; }); } 
                 else { html += `<li><em>No routine tasks signed off.</em></li>`; }
                 html += `</ul>`;
 
                 const doneDynamics = state.dynamicTasks.filter(t => t.status === 'Completed');
                 html += `<p><strong>2. Executed Tasks & Incidents:</strong></p>`;
                 if(doneDynamics.length > 0) {
-                    html += `<ol>`; doneDynamics.forEach(t => { html += `<li>${t.title} (${t.time})</li>`; }); html += `</ol>`;
+                    html += `<ol>`; doneDynamics.forEach(t => { html += `<li>${t.title}${t.time ? ` (${t.time})` : ''}</li>`; }); html += `</ol>`;
                 } else { html += `<p style="margin-left: 20px;"><em>Smooth Operation till end of shift.</em></p>`; }
 
                 const pendFixed = state.fixedTasks.filter(t => !t.done);
@@ -470,6 +518,7 @@
                 // Top state savers
                 el('userName').addEventListener('input', (e) => { state.userName = e.target.value; saveState(); });
                 el('shiftSelect').addEventListener('change', (e) => { state.shift = e.target.value; saveState(); });
+                el('timeRecordingEnabled').addEventListener('change', (e) => { state.timeRecordingEnabled = e.target.checked; saveState(); });
                 
                 // Add Controls
                 el('addContactBtn').addEventListener('click', cmdAddContact);
