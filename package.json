@@ -7,8 +7,9 @@
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "db:migrate": "node dist/scripts/migrate.js"
+    "test": "npm run build && node scripts/smoke-test.mjs",
+    "test:smoke": "node scripts/smoke-test.mjs",
+    "db:migrate": "npm run build && node dist/scripts/migrate.js"
   },
   "keywords": [],
   "author": "",

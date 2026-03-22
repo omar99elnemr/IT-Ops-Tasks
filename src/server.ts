@@ -1,5 +1,8 @@
 import express, { Request, Response, NextFunction, Express } from 'express';
 import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { randomUUID } from 'crypto';
 import { initializeDatabase } from './db/init.js';
 import { createAuthMiddleware } from './middleware/auth.js';
 import { createAuthRoutes } from './routes/auth.js';
@@ -11,6 +14,8 @@ import type { ApiResponse } from './types/index.js';
 const app: Express = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-jwt-secret-change-me';
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const publicPath = path.join(__dirname, '../public');
 
 // ============================================================================
 // MIDDLEWARE (before routes)
@@ -26,15 +31,28 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
+// Basic security and traceability headers
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const requestId = randomUUID();
+  res.setHeader('X-Request-ID', requestId);
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  next();
+});
+
 // Request logging middleware
 app.use((req: Request, res: Response, next: NextFunction) => {
   const start = Date.now();
   res.on('finish', () => {
     const duration = Date.now() - start;
-    console.log(`${req.method} ${req.path} - ${res.statusCode} (${duration}ms)`);
+    const requestId = res.getHeader('X-Request-ID') || 'unknown';
+    console.log(`[${requestId}] ${req.method} ${req.path} - ${res.statusCode} (${duration}ms)`);
   });
   next();
 });
+
+app.use(express.static(publicPath));
 
 // ============================================================================
 // HEALTH & STATUS (before routes)
@@ -50,6 +68,10 @@ app.get('/health', (req: Request, res: Response) => {
       environment: process.env.NODE_ENV || 'development',
     },
   } satisfies ApiResponse<any>);
+});
+
+app.get('/', (_req: Request, res: Response) => {
+  res.sendFile(path.join(publicPath, 'index.html'));
 });
 
 app.get('/api/status', (req: Request, res: Response) => {

@@ -1,808 +1,205 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <!-- Extremely aggressive cache-busting headers to bypass Vercel edge-caching -->
-    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-    <title>IT Ops Shift Handover</title>
-    <style>
-        :root { --primary: #005a9e; --secondary: #f4f6f9; --text: #333; --border: #ddd; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 15px; background-color: var(--secondary); margin: 0; color: var(--text); }
-        .container { max-width: 900px; margin: auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); box-sizing: border-box; }
-        
-        h1, h2, h3 { color: var(--primary); border-bottom: 2px solid var(--secondary); padding-bottom: 8px; margin-bottom: 15px;}
-        h1 { font-size: 1.5em; text-align: center; }
-        .section { margin-bottom: 30px; }
-        
-        .flex { display: flex; gap: 10px; align-items: center; }
-        .flex-grow { flex-grow: 1; min-width: 0; }
-        .flex-wrap { display: flex; flex-wrap: wrap; gap: 10px; }
-        
-        input, select, textarea { padding: 10px 12px; border: 1px solid var(--border); border-radius: 4px; box-sizing: border-box; width: 100%; font-size: 1em; }
-        input:focus, select:focus { outline: none; border-color: var(--primary); }
-        
-        button { padding: 10px 15px; cursor: pointer; border: none; border-radius: 4px; background-color: var(--primary); color: white; transition: background-color 0.2s; font-weight: 500; font-size: 1em; white-space: nowrap; }
-        button:hover { background-color: #004578; }
-        .btn-outline { background-color: transparent; color: var(--primary); border: 1px solid var(--primary); }
-        .btn-outline:hover { background-color: #f0f8ff; }
-        .btn-danger { background-color: transparent; color: #dc3545; border: 1px solid #dc3545; }
-        .btn-danger:hover { background-color: #fff5f5; }
-        .btn-success { background-color: #28a745; color: white;}
-        .btn-success:hover { background-color: #218838; }
-        .btn-icon { padding: 6px 10px; font-size: 0.9em; }
-        
-        .contact-card { background: #f8f9fa; border: 1px solid #e9ecef; padding: 10px; border-radius: 6px; display: flex; align-items: center; gap: 10px; min-width: 250px; flex-grow: 1; flex-basis: 30%; }
-        .contact-info { flex-grow: 1; display: flex; flex-direction: column; }
-        .contact-name { font-weight: bold; font-size: 0.9em; }
-        .contact-email { font-size: 0.8em; color: #666; }
-        .role-badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 0.75em; font-weight: bold; color: white; background: #6c757d;}
-        .role-badge.to { background: #007bff; }
-        .role-badge.cc { background: #17a2b8; }
-        
-        .task-list { list-style: none; padding: 0; margin: 0; }
-        .task-row { display: flex; align-items: center; justify-content: space-between; padding: 12px; border-bottom: 1px solid #f0f0f0; background: #fff; gap: 10px; }
-        .task-row:hover { background-color: #fafafa; }
-        .task-content { display: flex; flex-direction: column; gap: 4px; flex-grow: 1; }
-        .task-title { font-weight: 500; font-size: 1.05em; }
-        .task-meta { font-size: 0.85em; color: #666; }
-        .task-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-        
-        .status-badge { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 0.8em; font-weight: bold; text-align: center;}
-        .status-completed { background: #e6f4ea; color: #28a745; border: 1px solid #28a745;}
-        .status-inprogress { background: #fff3cd; color: #856404; border: 1px solid #856404;}
-        .status-handover { background: #cce5ff; color: #004085; border: 1px solid #004085;}
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IT Ops Control Deck</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-0: #0a1624;
+      --bg-1: #10253b;
+      --card: rgba(255, 255, 255, 0.88);
+      --ink: #0f2437;
+      --muted: #4b6477;
+      --accent: #ff6b35;
+      --line: #c7d7e5;
+      --danger: #b42318;
+    }
 
-        .card { background: #fafafa; padding: 15px; border-radius: 6px; border: 1px solid #eee; margin-bottom: 15px; }
-        .alert { border-left: 4px solid #6c757d; margin-bottom: 20px; font-size: 0.9em; padding: 10px; background: #e2e3e5; color: #000; font-weight: bold;}
-        #emailPreview { font-family: 'Calibri', sans-serif; background: white; padding: 20px; border: 1px solid #ddd; border-radius: 4px; margin-top: 15px; min-height: 200px; overflow-x: auto; font-size: 13pt; }
-        .strikethrough { text-decoration: line-through; color: #888; }
+    * { box-sizing: border-box; }
 
-        .app-modal-backdrop { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.42); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 16px; }
-        .app-modal-backdrop.show { display: flex; }
-        .app-modal { width: 100%; max-width: 460px; background: #fff; border-radius: 10px; box-shadow: 0 18px 40px rgba(0, 0, 0, 0.25); border: 1px solid #dbe3ee; overflow: hidden; }
-        .app-modal-head { padding: 14px 16px; border-bottom: 1px solid #eef2f6; font-size: 1rem; font-weight: 700; color: #103b66; }
-        .app-modal-body { padding: 14px 16px; color: #26313d; font-size: 0.95rem; }
-        .app-modal-body input { margin-top: 10px; }
-        .app-modal-actions { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 16px 16px; }
-        
-        @media (max-width: 650px) {
-            .container { padding: 15px; width: 100%; border-radius: 0; box-shadow: none; }
-            .flex-mobile-col { flex-direction: column; align-items: stretch; gap: 12px; }
-            .task-row { flex-direction: column; align-items: stretch; }
-            .task-actions { justify-content: space-between; margin-top: 6px; }
-            .task-actions button { flex-grow: 1; padding: 8px; font-size: 0.9em;}
-            .contact-card { flex-basis: 100%; }
-            .app-modal-actions button { min-width: 90px; }
-        }
-    </style>
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: 'Space Grotesk', sans-serif;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 10% 10%, rgba(14, 165, 164, 0.24), transparent 40%),
+        radial-gradient(circle at 85% 20%, rgba(255, 107, 53, 0.24), transparent 35%),
+        linear-gradient(145deg, var(--bg-0), var(--bg-1) 55%, #15314d);
+      padding: 16px;
+    }
+
+    h1, h2, h3 { margin: 0; }
+
+    .auth-shell, .deck-shell {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .auth-card, .panel {
+      background: var(--card);
+      border: 1px solid rgba(255, 255, 255, 0.45);
+      backdrop-filter: blur(6px);
+      border-radius: 16px;
+      box-shadow: 0 16px 30px rgba(3, 12, 19, 0.28);
+    }
+
+    .auth-card {
+      max-width: 620px;
+      margin: 5vh auto 0;
+      padding: 24px;
+    }
+
+    .subtitle { color: var(--muted); margin: 10px 0 14px; }
+
+    .segmented {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 14px;
+    }
+
+    .segmented button {
+      border: none;
+      padding: 10px;
+      background: #f3f8fc;
+      cursor: pointer;
+      font-weight: 600;
+      color: var(--muted);
+    }
+
+    .segmented button.active {
+      background: linear-gradient(135deg, var(--accent), #ff8a5f);
+      color: #fff;
+    }
+
+    .form-stack { display: grid; gap: 10px; }
+    .two-col { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+
+    input, select, textarea, button {
+      width: 100%;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      padding: 11px 12px;
+      font-family: inherit;
+      font-size: 14px;
+    }
+
+    textarea { font-family: 'IBM Plex Mono', monospace; }
+
+    button {
+      background: linear-gradient(135deg, #0ea5a4, #0b7d87);
+      color: #fff;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.15s ease;
+    }
+
+    button:hover { transform: translateY(-1px); }
+    button.outline {
+      background: transparent;
+      color: var(--ink);
+      border: 1px solid var(--line);
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 10px 0 14px;
+      color: #e7f2fb;
+    }
+
+    .topbar p { margin: 4px 0 0; opacity: 0.8; }
+
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .kpis article {
+      background: rgba(14, 165, 164, 0.16);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      border-radius: 14px;
+      padding: 12px;
+      color: #e6f6ff;
+      display: grid;
+      gap: 2px;
+    }
+
+    .kpis strong { font-size: 26px; line-height: 1; }
+    .kpis span { font-size: 12px; opacity: 0.88; }
+
+    .grid.two {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .panel { padding: 16px; }
+    .panel h3 { margin-bottom: 10px; }
+
+    .list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 8px;
+      max-height: 240px;
+      overflow: auto;
+    }
+
+    .list li {
+      display: grid;
+      gap: 2px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      background: #f7fbff;
+    }
+
+    .list small { color: var(--muted); }
+
+    .error-box {
+      margin: 10px 0;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid #f1c0be;
+      color: var(--danger);
+      background: #fff1f0;
+    }
+
+    .report-block { margin-top: 10px; display: grid; gap: 8px; }
+
+    .reveal { animation: rise 420ms ease-out; }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 900px) {
+      .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .grid.two, .two-col { grid-template-columns: 1fr; }
+      .topbar { gap: 10px; flex-direction: column; align-items: flex-start; }
+    }
+  </style>
 </head>
 <body>
-    <div class="container" id="appRoot">
-        <h1>IT Operations Handover</h1>
-
-        <div class="alert" id="systemAlert">System is starting. Please wait a moment.</div>
-
-        <!-- Settings Section -->
-        <div class="section">
-            <button id="toggleSettingsBtn" class="btn-outline" style="width: 100%;">⚙️ Show/Hide Profile and Contacts</button>
-            <div id="settingsPanel" style="display:none; margin-top: 15px;">
-                <div class="card">
-                    <h3>My Setup</h3>
-                    <div class="flex flex-mobile-col" style="margin-bottom: 15px;">
-                        <div class="flex-grow"><label style="font-size: 0.85em; color:#555;">My Name</label><input type="text" id="userName" placeholder="e.g. Gerges Hani"></div>
-                        <div class="flex-grow"><label style="font-size: 0.85em; color:#555;">Current Shift</label>
-                            <select id="shiftSelect">
-                                <option value="Morning (09:00 - 17:00)">Morning (09:00 - 17:00)</option>
-                                <option value="Afternoon (14:00 - 23:00)">Afternoon (14:00 - 23:00)</option>
-                            </select>
-                        </div>
-                        <div class="flex-grow"><label style="font-size: 0.85em; color:#555;">Date</label><input type="date" id="datePicker"></div>
-                    </div>
-                    <div class="flex" style="margin-top: 10px; align-items: center;">
-                        <input type="checkbox" id="timeRecordingEnabled" style="width: auto; margin-right: 8px;">
-                        <label for="timeRecordingEnabled" style="font-size: 0.9em; color:#444;">Enable automatic time recording</label>
-                    </div>
-                    <div style="margin-top: 12px;">
-                        <button id="resetExceptContactsBtn" class="btn-danger" type="button">Reset Everything Except Contacts</button>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <h3>Contacts Directory</h3>
-                    <p style="font-size: 0.85em; color: #666; margin-top: 0; margin-bottom: 15px;">Add emails. You can quickly switch them between 'TO' and 'CC' when preparing reports.</p>
-                    <div class="flex flex-mobile-col" style="margin-bottom: 15px;">
-                        <input type="text" id="contactName" placeholder="Name (e.g. Eng. Malak)" class="flex-grow">
-                        <input type="email" id="contactEmail" placeholder="Email Address" class="flex-grow">
-                        <select id="contactRole" style="width: auto;">
-                            <option value="none">-- Set Role --</option>
-                            <option value="to">TO (Direct)</option>
-                            <option value="cc">CC (Carbon Copy)</option>
-                        </select>
-                        <button id="addContactBtn">Add</button>
-                    </div>
-                    <div id="contactsContainer" class="flex-wrap"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Routine Tasks -->
-        <div class="section">
-            <h3 style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;">
-                1. Routine Operations <span style="font-size: 0.55em; color: #777; font-weight: normal;">(Check off daily tasks)</span>
-            </h3>
-            <div class="card flex flex-mobile-col" style="margin-bottom: 15px; padding: 10px;">
-                <input type="text" id="newFixedTaskInput" placeholder="Add new permanent routine task..." class="flex-grow">
-                <button id="addFixedTaskBtn">Add Task</button>
-            </div>
-            <ul id="fixedTasksList" class="task-list"></ul>
-        </div>
-
-        <!-- Dynamic Tasks -->
-        <div class="section">
-            <h3 style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;">
-                2. Ad-Hoc / Handover Log <span style="font-size: 0.55em; color: #777; font-weight: normal;">(Record new entries)</span>
-            </h3>
-            <div class="card flex flex-mobile-col" style="margin-bottom: 15px; padding: 10px;">
-                <input type="text" id="newTaskDesc" placeholder="Task description... (e.g. Setup mobile C19)" class="flex-grow">
-                <div class="flex flex-grow" style="gap:10px;">
-                    <select id="newTaskStatus" style="flex-grow:1;">
-                        <option value="Completed">Completed Today</option>
-                        <option value="InProgress">In Progress (Next Day)</option>
-                        <option value="Handover">Handed Over</option>
-                    </select>
-                    <button id="addDynamicTaskBtn">Record</button>
-                </div>
-            </div>
-            <ul id="dynamicTasksList" class="task-list"></ul>
-        </div>
-
-        <!-- Final Report -->
-        <div class="section">
-            <h3>3. Generate End-of-Shift Email</h3>
-            <button id="generateReportBtn" style="width: 100%; font-size: 1.1em; padding: 12px;">Generate Report Preview</button>
-            <div id="reportContainer" style="display: none; margin-top:20px;">
-                <div class="flex flex-mobile-col" style="gap:10px; margin-bottom: 15px;">
-                    <button id="openOutlookBtn" class="btn-success flex-grow" style="padding: 12px; font-size: 1.1em;">Open Outlook Draft</button>
-                    <button id="copyHtmlBtn" class="btn-outline flex-grow" style="padding: 12px; font-size: 1.1em;">Copy Text for Manual Paste</button>
-                </div>
-                <div id="copyMsg" style="color: #28a745; font-weight: bold; text-align: center; display:none; margin-top:-10px; margin-bottom:10px;">Report Copied Successfully! Now hit Ctrl+V in Outlook.</div>
-                <div id="emailPreview"></div>
-            </div>
-        </div>
-    </div>
-
-    <div id="appModalBackdrop" class="app-modal-backdrop" aria-hidden="true">
-        <div class="app-modal" role="dialog" aria-modal="true" aria-labelledby="appModalTitle">
-            <div id="appModalTitle" class="app-modal-head">Action Required</div>
-            <div class="app-modal-body">
-                <div id="appModalText"></div>
-                <input id="appModalInput" type="text" style="display:none;" />
-            </div>
-            <div class="app-modal-actions">
-                <button id="appModalCancel" class="btn-outline" type="button">Cancel</button>
-                <button id="appModalOk" type="button">OK</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- INLINE SCRIPT: Guarantees 100% Load & Zero External Cache Conflicts -->
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // NEW STORAGE KEY: Bypasses ANY corrupted data currently sitting in your phone browser!
-            const STORAGE_KEY = 'itOpsState_PRO_V1';
-
-            function getDefaultFixedTasks() {
-                return [
-                    { id: 1, title: 'Checked all IDF rooms', done: false, time: null },
-                    { id: 2, title: 'Checked IPTV Channels', done: false, time: null },
-                    { id: 3, title: 'Checked All Hosts Health & Storage', done: false, time: null },
-                    { id: 4, title: 'Checked Landline', done: false, time: null }
-                ];
-            }
-
-            // Base State
-            let state = {
-                userName: '',
-                shift: 'Morning (09:00 - 17:00)',
-                timeRecordingEnabled: true,
-                contacts: [],
-                fixedTasks: getDefaultFixedTasks(),
-                dynamicTasks: []
-            };
-
-            // DOM Utility
-              function el(id) { return document.getElementById(id); }
-              let appMessageTimer;
-
-              function showAppMessage(message, type = 'info', duration = 3000) {
-                  const banner = el('systemAlert');
-                  if (!banner) return;
-
-                  const themes = {
-                      success: { bg: '#d4edda', color: '#155724', border: '#28a745' },
-                      error: { bg: '#f8d7da', color: '#721c24', border: '#f5c6cb' },
-                      warning: { bg: '#fff3cd', color: '#856404', border: '#ffeeba' },
-                      info: { bg: '#cce5ff', color: '#004085', border: '#b8daff' }
-                  };
-
-                  const palette = themes[type] || themes.info;
-                  banner.style.display = 'block';
-                  banner.style.backgroundColor = palette.bg;
-                  banner.style.color = palette.color;
-                  banner.style.borderLeftColor = palette.border;
-                  banner.innerText = message;
-
-                  clearTimeout(appMessageTimer);
-                  if (duration > 0) {
-                      appMessageTimer = setTimeout(() => { banner.style.display = 'none'; }, duration);
-                  }
-              }
-
-              function openAppModal(options) {
-                  const backdrop = el('appModalBackdrop');
-                  const title = el('appModalTitle');
-                  const text = el('appModalText');
-                  const input = el('appModalInput');
-                  const okBtn = el('appModalOk');
-                  const cancelBtn = el('appModalCancel');
-
-                  if (!backdrop || !title || !text || !input || !okBtn || !cancelBtn) {
-                      return Promise.resolve({ confirmed: false, value: '' });
-                  }
-
-                  title.innerText = options.title || 'Action Required';
-                  text.innerText = options.message || '';
-                  okBtn.innerText = options.okText || 'OK';
-                  cancelBtn.innerText = options.cancelText || 'Cancel';
-
-                  const useInput = !!options.useInput;
-                  input.style.display = useInput ? 'block' : 'none';
-                  input.value = useInput ? (options.defaultValue || '') : '';
-
-                  backdrop.classList.add('show');
-                  backdrop.setAttribute('aria-hidden', 'false');
-
-                  return new Promise((resolve) => {
-                      const cleanup = () => {
-                          backdrop.classList.remove('show');
-                          backdrop.setAttribute('aria-hidden', 'true');
-                          okBtn.removeEventListener('click', onOk);
-                          cancelBtn.removeEventListener('click', onCancel);
-                          backdrop.removeEventListener('click', onBackdropClick);
-                          document.removeEventListener('keydown', onKeydown);
-                      };
-
-                      const onOk = () => {
-                          const value = useInput ? input.value : '';
-                          cleanup();
-                          resolve({ confirmed: true, value });
-                      };
-
-                      const onCancel = () => {
-                          cleanup();
-                          resolve({ confirmed: false, value: '' });
-                      };
-
-                      const onBackdropClick = (e) => {
-                          if (e.target === backdrop) {
-                              onCancel();
-                          }
-                      };
-
-                      const onKeydown = (e) => {
-                          if (e.key === 'Escape') onCancel();
-                          if (e.key === 'Enter') onOk();
-                      };
-
-                      okBtn.addEventListener('click', onOk);
-                      cancelBtn.addEventListener('click', onCancel);
-                      backdrop.addEventListener('click', onBackdropClick);
-                      document.addEventListener('keydown', onKeydown);
-
-                      if (useInput) {
-                          setTimeout(() => {
-                              input.focus();
-                              input.select();
-                          }, 0);
-                      } else {
-                          setTimeout(() => okBtn.focus(), 0);
-                      }
-                  });
-              }
-
-              async function showConfirmDialog(message, title = 'Please Confirm') {
-                  const result = await openAppModal({ title, message, okText: 'Confirm', cancelText: 'Cancel' });
-                  return result.confirmed;
-              }
-
-              async function showInputDialog(message, defaultValue = '', title = 'Edit Value') {
-                  const result = await openAppModal({
-                      title,
-                      message,
-                      okText: 'Save',
-                      cancelText: 'Cancel',
-                      useInput: true,
-                      defaultValue
-                  });
-                  return result;
-              }
-
-              // === CLOUD SYNC SETTINGS ===
-              const JSONBIN_URL = "https://api.jsonbin.io/v3/b/69be8ac2aa77b81da905a456";
-              const JSONBIN_KEY = "$2a$10$BZHDs7xI.EreDDh1nb.YcOpZ.67.MqtPAwmbUTe1HvWK1NgcWhep.";
-              let saveTimeout;
-
-              function saveState() {
-                  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e){}
-
-                  clearTimeout(saveTimeout);
-                  const alert = el('systemAlert');
-                  if(alert) {
-                      alert.style.display = 'block';
-                      alert.style.backgroundColor = '#fff3cd';
-                      alert.style.color = '#856404';
-                      alert.innerText = '⏳ Syncing...';
-                  }
-
-                  saveTimeout = setTimeout(async () => {
-                      try {
-                          const res = await fetch(JSONBIN_URL, {
-                              method: 'PUT',
-                              headers: {
-                                  'Content-Type': 'application/json',
-                                  'X-Access-Key': JSONBIN_KEY
-                              },
-                              body: JSON.stringify(state)
-                          });
-                          if (res.ok && alert) {
-                              alert.style.backgroundColor = '#d4edda';
-                              alert.style.color = '#155724';
-                              alert.innerText = '✅ Synced!';
-                              setTimeout(() => { alert.style.display = 'none'; }, 2000);
-                          }
-                      } catch(err) {
-                          if(alert) {
-                              alert.style.backgroundColor = '#f8d7da';
-                              alert.style.color = '#721c24';
-                              alert.innerText = '⚠️ Saved locally only';
-                              setTimeout(() => { alert.style.display = 'none'; }, 3000);
-                          }
-                      }
-                  }, 1500); 
-              }
-
-              async function loadState() {
-                  const alertBanner = el('systemAlert');
-                  if(alertBanner) {
-                      alertBanner.style.display = 'block';
-                      alertBanner.style.backgroundColor = '#cce5ff';
-                      alertBanner.style.color = '#004085';
-                      alertBanner.innerText = '🔄 Loading Cloud Data...';
-                  }
-
-                  try {
-                      const res = await fetch(JSONBIN_URL + '?meta=false', {
-                          headers: { 'X-Access-Key': JSONBIN_KEY }
-                      });
-                      if (res.ok) {
-                          const data = await res.json();
-                          if (data && typeof data === 'object') {
-                              if(data.userName !== undefined) state.userName = data.userName;
-                              if(data.shift !== undefined) state.shift = data.shift;
-                              if(data.timeRecordingEnabled !== undefined) state.timeRecordingEnabled = !!data.timeRecordingEnabled;
-                              if(data.contacts !== undefined) state.contacts = data.contacts;
-                              if(data.fixedTasks !== undefined) state.fixedTasks = data.fixedTasks;
-                              if(data.dynamicTasks !== undefined) state.dynamicTasks = data.dynamicTasks;
-                              localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-                              
-                              if(alertBanner) {
-                                  alertBanner.style.backgroundColor = '#d4edda';
-                                  alertBanner.style.color = '#155724';
-                                  alertBanner.innerText = '✅ Loaded from Cloud!';
-                                  setTimeout(() => { alertBanner.style.display = 'none'; }, 2000);
-                              }
-                          }
-                      } else throw new Error();
-                  } catch(err) {
-                      try {
-                          const saved = localStorage.getItem(STORAGE_KEY);
-                          if (saved) {
-                              const parsed = JSON.parse(saved);
-                              if(parsed.userName) state.userName = parsed.userName;
-                              if(parsed.shift) state.shift = parsed.shift;
-                              if(parsed.timeRecordingEnabled !== undefined) state.timeRecordingEnabled = !!parsed.timeRecordingEnabled;
-                              if(parsed.contacts) state.contacts = parsed.contacts;
-                              if(parsed.fixedTasks) state.fixedTasks = parsed.fixedTasks;
-                              if(parsed.dynamicTasks) state.dynamicTasks = parsed.dynamicTasks;
-                          }
-                      } catch(e) {}
-                      if(alertBanner) {
-                          alertBanner.style.backgroundColor = '#f8d7da';
-                          alertBanner.style.color = '#721c24';
-                          alertBanner.innerText = '⚠️ Local Data (Offline)';
-                          setTimeout(() => { alertBanner.style.display = 'none'; }, 2000);
-                      }
-                  }
-
-                  if(el('userName')) el('userName').value = state.userName;
-                  if(el('shiftSelect')) el('shiftSelect').value = state.shift;
-                  if(el('datePicker')) el('datePicker').valueAsDate = new Date();
-                  if(el('timeRecordingEnabled')) el('timeRecordingEnabled').checked = !!state.timeRecordingEnabled;
-              }
-              
-              // === CONTACTS ===
-            function renderContacts() {
-                const ctn = el('contactsContainer');
-                if(!ctn) return;
-                ctn.innerHTML = '';
-                if(state.contacts.length === 0) {
-                    ctn.innerHTML = '<span style="font-size:0.85em; color:#999;">No contacts added yet.</span>';
-                    return;
-                }
-                state.contacts.forEach(c => {
-                    const card = document.createElement('div');
-                    card.className = 'contact-card';
-                    card.innerHTML = `
-                        <div class="contact-info">
-                            <span class="contact-name">${c.name}</span>
-                            <span class="contact-email">${c.email}</span>
-                            ${c.role !== 'none' ? `<span class="role-badge ${c.role}" style="margin-top:4px; width:fit-content;">${c.role.toUpperCase()}</span>` : ''}
-                        </div>
-                    `;
-                    const controls = document.createElement('div');
-                    controls.style.display = 'flex'; controls.style.flexDirection = 'column'; controls.style.gap = '5px';
-                    
-                    const sel = document.createElement('select');
-                    sel.style.padding = '4px'; sel.style.fontSize = '0.8em';
-                    ['none', 'to', 'cc'].forEach(r => {
-                        const opt = document.createElement('option');
-                        opt.value = r; opt.innerText = r === 'none' ? 'Idle' : r.toUpperCase();
-                        if(r === c.role) opt.selected = true;
-                        sel.appendChild(opt);
-                    });
-                    sel.onchange = (e) => { c.role = e.target.value; saveState(); renderContacts(); };
-                    
-                    const del = document.createElement('button');
-                    del.className = 'btn-danger btn-icon';
-                    del.innerText = 'Delete';
-                    del.onclick = async () => {
-                        const confirmed = await showConfirmDialog('Remove this contact?', 'Delete Contact');
-                        if (confirmed) {
-                            state.contacts = state.contacts.filter(x => x.id !== c.id);
-                            saveState();
-                            renderContacts();
-                            showAppMessage('Contact removed.', 'success');
-                        }
-                    };
-                    
-                    controls.appendChild(sel); controls.appendChild(del);
-                    card.appendChild(controls);
-                    ctn.appendChild(card);
-                });
-            }
-
-            function cmdAddContact() {
-                const n = el('contactName').value.trim();
-                const e = el('contactEmail').value.trim();
-                const r = el('contactRole').value;
-                if(!n || !e) {
-                    showAppMessage('Name and Email are required.', 'error');
-                    return;
-                }
-                if(state.contacts.some(c => c.email.toLowerCase() === e.toLowerCase())) {
-                    showAppMessage('Email already exists.', 'warning');
-                    return;
-                }
-                
-                state.contacts.push({ id: Date.now(), name: n, email: e, role: r });
-                el('contactName').value = ''; el('contactEmail').value = ''; el('contactRole').value = 'none';
-                saveState(); renderContacts();
-            }
-
-            // === FIXED TASKS ===
-            function formatTime() {
-                return new Intl.DateTimeFormat('en-EG', { timeZone: 'Africa/Cairo', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date());
-            }
-
-            function getRecordedTime() {
-                return state.timeRecordingEnabled ? formatTime() : null;
-            }
-
-            function formatMetaTime(timeValue) {
-                return timeValue ? timeValue : 'No time recorded';
-            }
-
-            function normalizeTaskStatus(task) {
-                if (task.status === 'Pending') task.status = 'InProgress';
-                return task.status;
-            }
-
-            function getStatusLabel(status) {
-                return status === 'InProgress' ? 'In Progress' : status;
-            }
-
-            function getStatusClass(status) {
-                return status === 'InProgress' ? 'inprogress' : String(status || '').toLowerCase();
-            }
-
-            async function editTaskTime(task) {
-                const result = await showInputDialog('Edit time (HH:mm), leave empty to clear time:', task.time || '', 'Edit Task Time');
-                if (!result.confirmed) return;
-                const value = result.value;
-                const trimmed = value.trim();
-                if (!trimmed) {
-                    task.time = null;
-                    saveState();
-                    renderFixedTasks();
-                    renderDynamicTasks();
-                    showAppMessage('Time cleared.', 'info');
-                    return;
-                }
-                const isValid = /^([01]\d|2[0-3]):[0-5]\d$/.test(trimmed);
-                if (!isValid) {
-                    showAppMessage('Please enter time in HH:mm format, for example 16:35.', 'warning');
-                    return;
-                }
-                task.time = trimmed;
-                saveState();
-                renderFixedTasks();
-                renderDynamicTasks();
-                showAppMessage('Time updated.', 'success');
-            }
-
-            function renderFixedTasks() {
-                const list = el('fixedTasksList');
-                if(!list) return;
-                list.innerHTML = '';
-                state.fixedTasks.forEach(task => {
-                    const li = document.createElement('li');
-                    li.className = 'task-row';
-                    li.innerHTML = `
-                        <div class="task-content">
-                            <span class="task-title ${task.done ? 'strikethrough' : ''}">${task.title}</span>
-                            <span class="task-meta">${task.done ? '✅ Completed ' + formatMetaTime(task.time) : '⏳ In Progress'}</span>
-                        </div>
-                    `;
-                    const actions = document.createElement('div');
-                    actions.className = 'task-actions';
-                    
-                    const doneBtn = document.createElement('button');
-                    doneBtn.className = task.done ? 'btn-outline' : 'btn-success';
-                    doneBtn.innerText = task.done ? 'Undo' : 'Mark Done';
-                    doneBtn.onclick = () => { task.done = !task.done; task.time = task.done ? getRecordedTime() : null; saveState(); renderFixedTasks(); };
-
-                    const editTimeBtn = document.createElement('button');
-                    editTimeBtn.className = 'btn-outline';
-                    editTimeBtn.innerText = 'Edit Time';
-                    editTimeBtn.onclick = () => editTaskTime(task);
-                    
-                    const delBtn = document.createElement('button');
-                    delBtn.className = 'btn-danger'; delBtn.innerText = 'X';
-                    delBtn.onclick = async () => {
-                        const confirmed = await showConfirmDialog('Remove this routine task?', 'Delete Routine Task');
-                        if (confirmed) {
-                            state.fixedTasks = state.fixedTasks.filter(t => t.id !== task.id);
-                            saveState();
-                            renderFixedTasks();
-                            showAppMessage('Routine task removed.', 'success');
-                        }
-                    };
-
-                    actions.appendChild(doneBtn); actions.appendChild(editTimeBtn); actions.appendChild(delBtn);
-                    li.appendChild(actions); list.appendChild(li);
-                });
-            }
-
-            function cmdAddFixedTask() {
-                const title = el('newFixedTaskInput').value.trim();
-                if(!title) return;
-                state.fixedTasks.push({ id: Date.now(), title, done: false, time: null });
-                el('newFixedTaskInput').value = ''; saveState(); renderFixedTasks();
-            }
-
-            // === DYNAMIC TASKS ===
-            function renderDynamicTasks() {
-                const list = el('dynamicTasksList');
-                if(!list) return;
-                list.innerHTML = '';
-                state.dynamicTasks.forEach(task => {
-                    normalizeTaskStatus(task);
-                    const li = document.createElement('li'); li.className = 'task-row';
-                    li.innerHTML = `
-                        <div class="task-content">
-                            <div class="flex" style="flex-wrap: wrap;">
-                                <span class="status-badge status-${getStatusClass(task.status)}">${getStatusLabel(task.status)}</span>
-                                <span class="task-title">${task.title}</span>
-                            </div>
-                            <span class="task-meta">Logged at ${formatMetaTime(task.time)}</span>
-                        </div>
-                    `;
-                    const actions = document.createElement('div'); actions.className = 'task-actions';
-                    
-                    const makeRtn = document.createElement('button');
-                    makeRtn.className = 'btn-outline'; makeRtn.innerText = 'Make Routine';
-                    makeRtn.onclick = () => {
-                        state.fixedTasks.push({ id: Date.now(), title: task.title, done: task.status === 'Completed', time: task.status === 'Completed' ? task.time : null });
-                        state.dynamicTasks = state.dynamicTasks.filter(t => t.id !== task.id);
-                        saveState(); renderFixedTasks(); renderDynamicTasks();
-                    };
-
-                    const delBtn = document.createElement('button');
-                    delBtn.className = 'btn-danger'; delBtn.innerText = 'Del';
-                    delBtn.onclick = async () => {
-                        const confirmed = await showConfirmDialog('Remove this ad-hoc task?', 'Delete Task');
-                        if (confirmed) {
-                            state.dynamicTasks = state.dynamicTasks.filter(t => t.id !== task.id);
-                            saveState();
-                            renderDynamicTasks();
-                            showAppMessage('Task removed.', 'success');
-                        }
-                    };
-
-                    const editTimeBtn = document.createElement('button');
-                    editTimeBtn.className = 'btn-outline';
-                    editTimeBtn.innerText = 'Edit Time';
-                    editTimeBtn.onclick = () => editTaskTime(task);
-
-                    actions.appendChild(makeRtn); actions.appendChild(editTimeBtn); actions.appendChild(delBtn);
-                    li.appendChild(actions); list.appendChild(li);
-                });
-            }
-
-            function cmdAddDynamicTask() {
-                const desc = el('newTaskDesc').value.trim();
-                const stat = el('newTaskStatus').value;
-                if(!desc) return;
-                state.dynamicTasks.push({ id: Date.now(), title: desc, status: stat, time: getRecordedTime() });
-                el('newTaskDesc').value = ''; saveState(); renderDynamicTasks();
-            }
-
-            async function cmdResetExceptContacts() {
-                const confirmed = await showConfirmDialog(
-                    'This will reset your name, shift, date, tasks, and time settings. Contacts will be kept. Continue?',
-                    'Reset Application Data'
-                );
-                if (!confirmed) return;
-
-                const preservedContacts = Array.isArray(state.contacts) ? state.contacts : [];
-                state = {
-                    userName: '',
-                    shift: 'Morning (09:00 - 17:00)',
-                    timeRecordingEnabled: true,
-                    contacts: preservedContacts,
-                    fixedTasks: getDefaultFixedTasks(),
-                    dynamicTasks: []
-                };
-
-                if (el('newFixedTaskInput')) el('newFixedTaskInput').value = '';
-                if (el('newTaskDesc')) el('newTaskDesc').value = '';
-                if (el('newTaskStatus')) el('newTaskStatus').value = 'Completed';
-                if (el('reportContainer')) el('reportContainer').style.display = 'none';
-
-                if (el('userName')) el('userName').value = state.userName;
-                if (el('shiftSelect')) el('shiftSelect').value = state.shift;
-                if (el('datePicker')) el('datePicker').valueAsDate = new Date();
-                if (el('timeRecordingEnabled')) el('timeRecordingEnabled').checked = state.timeRecordingEnabled;
-
-                saveState();
-                renderContacts();
-                renderFixedTasks();
-                renderDynamicTasks();
-                showAppMessage('Application data reset. Contacts were preserved.', 'success');
-            }
-
-            // === EMAILS & VIEWS ===
-            function generateEmailHTML() {
-                const d = el('datePicker').valueAsDate || new Date();
-                const _date = `${d.getDate()}-${d.getMonth() + 1}-${d.getFullYear()}`;
-                
-                const toContacts = state.contacts.filter(c => c.role === 'to');
-                const greetingNames = toContacts.length > 0 ? toContacts.map(c => c.name).join(' & ') : 'Management';
-
-                let html = `<div style="font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 14pt; color: #000;">`;
-                html += `<p>Dear <strong>${greetingNames}</strong>,</p>`;
-                html += `<p>After greetings, kindly find below the summary of today’s completed operational tasks (<strong>${_date}</strong>).</p>`;
-
-                const doneFixed = state.fixedTasks.filter(t => t.done);
-                html += `<p><strong>1. Routine verification completed:</strong></p><ul>`;
-                if(doneFixed.length > 0) { doneFixed.forEach(t => { html += `<li>${t.title}${t.time ? ` (${t.time})` : ''}</li>`; }); } 
-                else { html += `<li><em>No routine tasks signed off.</em></li>`; }
-                html += `</ul>`;
-
-                const doneDynamics = state.dynamicTasks.filter(t => t.status === 'Completed');
-                html += `<p><strong>2. Addressed Tasks and Incidents:</strong></p>`;
-                if(doneDynamics.length > 0) {
-                    html += `<ol>`; doneDynamics.forEach(t => { html += `<li>${t.title}${t.time ? ` (${t.time})` : ''}</li>`; }); html += `</ol>`;
-                } else { html += `<p style="margin-left: 20px;"><em>Operations ran smoothly until the end of the shift.</em></p>`; }
-
-                const pendFixed = state.fixedTasks.filter(t => !t.done);
-                const pendDynamics = state.dynamicTasks.filter(t => t.status !== 'Completed');
-                if (pendFixed.length > 0 || pendDynamics.length > 0) {
-                    html += `<br><p><strong>Handover & In Progress:</strong></p><ul>`;
-                    pendDynamics.forEach(t => {
-                        const statusLabel = getStatusLabel(normalizeTaskStatus(t)).toUpperCase();
-                        html += `<li><strong>[${statusLabel}]</strong> ${t.title}</li>`;
-                    });
-                    pendFixed.forEach(t => { html += `<li>[IN PROGRESS ROUTINE] ${t.title}</li>`; });
-                    html += `</ul>`;
-                }
-
-                html += `<br><p>${state.userName || 'IT Operations'}</p></div>`;
-                return html;
-            }
-
-            // Events
-            function attachEvents() {
-                // UI Toggles safely
-                el('toggleSettingsBtn').addEventListener('click', (e) => {
-                    e.preventDefault();
-                    const p = el('settingsPanel');
-                    p.style.display = (p.style.display === 'none' || p.style.display === '') ? 'block' : 'none';
-                });
-
-                // Top state savers
-                el('userName').addEventListener('input', (e) => { state.userName = e.target.value; saveState(); });
-                el('shiftSelect').addEventListener('change', (e) => { state.shift = e.target.value; saveState(); });
-                el('timeRecordingEnabled').addEventListener('change', (e) => { state.timeRecordingEnabled = e.target.checked; saveState(); });
-                
-                // Add Controls
-                el('addContactBtn').addEventListener('click', cmdAddContact);
-                el('addFixedTaskBtn').addEventListener('click', cmdAddFixedTask);
-                el('addDynamicTaskBtn').addEventListener('click', cmdAddDynamicTask);
-                el('resetExceptContactsBtn').addEventListener('click', cmdResetExceptContacts);
-
-                // Reports
-                el('generateReportBtn').addEventListener('click', () => {
-                    el('emailPreview').innerHTML = generateEmailHTML();
-                    el('reportContainer').style.display = 'block';
-                });
-
-                const docopy = async () => {
-                    try {
-                        const htmlB = new Blob([el('emailPreview').innerHTML], { type: 'text/html' });
-                        const txtB = new Blob([el('emailPreview').innerText], { type: 'text/plain' });
-                        await navigator.clipboard.write([new ClipboardItem({ 'text/html': htmlB, 'text/plain': txtB })]);
-                        el('copyMsg').style.display = 'block';
-                        setTimeout(() => { if(el('copyMsg')) el('copyMsg').style.display = 'none'; }, 4000);
-                    } catch (e) { showAppMessage('Failed to auto-copy. Please copy manually with Ctrl+C.', 'error', 4500); }
-                };
-
-                el('copyHtmlBtn').addEventListener('click', docopy);
-                el('openOutlookBtn').addEventListener('click', async () => {
-                    el('emailPreview').innerHTML = generateEmailHTML();
-                    el('reportContainer').style.display = 'block';
-                    
-                    const TO = state.contacts.filter(c => c.role === 'to').map(c => c.email).join(';');
-                    const CC = state.contacts.filter(c => c.role === 'cc').map(c => c.email).join(';');
-                    const d = el('datePicker').valueAsDate || new Date();
-                    const subj = encodeURIComponent(`Completed operational tasks for today ${d.getDate()}-${d.getMonth() + 1}-${d.getFullYear()}`);
-                    
-                    await docopy();
-                    window.location.href = `mailto:${TO}?cc=${CC}&subject=${subj}`;
-                });
-            }
-
-            // Boot Initialization
-              try {
-                  loadState().then(() => {
-                      if(typeof renderContacts === 'function') renderContacts();
-                      if(typeof renderFixedTasks === 'function') renderFixedTasks();
-                      if(typeof renderDynamicTasks === 'function') renderDynamicTasks();
-                      if(typeof attachEvents === 'function') attachEvents();
-                  });
-              } catch(e) {
-                  const errBox = el('systemAlert');
-                  if(errBox) {
-                      errBox.style.backgroundColor='#f8d7da';
-                      errBox.style.color='#721c24';
-                      errBox.innerText = "Fatal load error. Resetting storage. Please refresh.";
-                      localStorage.clear();
-                  }
-              }
-          });
-      </script>
+  <div id="root"></div>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script type="text/babel" data-presets="react" src="/app.jsx"></script>
 </body>
 </html>
