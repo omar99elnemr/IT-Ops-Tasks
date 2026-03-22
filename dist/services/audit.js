@@ -3,6 +3,7 @@ import { randomUUID } from 'crypto';
  * Audit service: Log all mutations for compliance and troubleshooting
  */
 export class AuditService {
+    db;
     constructor(db) {
         this.db = db;
     }

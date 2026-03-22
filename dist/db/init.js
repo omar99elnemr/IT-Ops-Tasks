@@ -1,24 +1,44 @@
 import sqlite3 from 'sqlite3';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import bcrypt from 'bcryptjs';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const dbPath = path.join(__dirname, '../../data/it-ops.db');
+function resolveDatabasePath() {
+    if (process.env.DATABASE_PATH) {
+        return process.env.DATABASE_PATH;
+    }
+    // Vercel/serverless file systems are read-only except /tmp.
+    if (process.env.VERCEL || process.env.NODE_ENV === 'production') {
+        return '/tmp/it-ops.db';
+    }
+    const localDataDir = path.join(__dirname, '../../data');
+    if (!fs.existsSync(localDataDir)) {
+        fs.mkdirSync(localDataDir, { recursive: true });
+    }
+    return path.join(localDataDir, 'it-ops.db');
+}
+const dbPath = resolveDatabasePath();
 /**
  * Initialize SQLite database with schema
  * Based on Phase 0 baseline domain model
  */
 export function initializeDatabase() {
     return new Promise((resolve, reject) => {
-        const db = new sqlite3.Database(dbPath, (err) => {
-            if (err) {
-                reject(err);
-            }
-            else {
-                db.serialize(() => {
-                    db.run('PRAGMA foreign_keys = ON');
-                    // Users table
-                    db.run(`
+        const tryOpen = (candidatePath, onFailure) => {
+            const db = new sqlite3.Database(candidatePath, (err) => {
+                if (err) {
+                    if (onFailure) {
+                        onFailure(err);
+                        return;
+                    }
+                    reject(err);
+                }
+                else {
+                    db.serialize(() => {
+                        db.run('PRAGMA foreign_keys = ON');
+                        // Users table
+                        db.run(`
             CREATE TABLE IF NOT EXISTS users (
               id TEXT PRIMARY KEY,
               firstName TEXT NOT NULL,
@@ -31,8 +51,8 @@ export function initializeDatabase() {
               deletedAt TIMESTAMP
             )
           `);
-                    // Contacts table
-                    db.run(`
+                        // Contacts table
+                        db.run(`
             CREATE TABLE IF NOT EXISTS contacts (
               id TEXT PRIMARY KEY,
               userId TEXT NOT NULL,
@@ -45,8 +65,8 @@ export function initializeDatabase() {
               FOREIGN KEY(userId) REFERENCES users(id) ON DELETE CASCADE
             )
           `);
-                    // Tasks table (fixed and dynamic)
-                    db.run(`
+                        // Tasks table (fixed and dynamic)
+                        db.run(`
             CREATE TABLE IF NOT EXISTS tasks (
               id TEXT PRIMARY KEY,
               userId TEXT NOT NULL,
@@ -61,8 +81,8 @@ export function initializeDatabase() {
               FOREIGN KEY(userId) REFERENCES users(id) ON DELETE CASCADE
             )
           `);
-                    // Shift sessions table
-                    db.run(`
+                        // Shift sessions table
+                        db.run(`
             CREATE TABLE IF NOT EXISTS shift_sessions (
               id TEXT PRIMARY KEY,
               userId TEXT NOT NULL,
@@ -74,8 +94,8 @@ export function initializeDatabase() {
               FOREIGN KEY(userId) REFERENCES users(id) ON DELETE CASCADE
             )
           `);
-                    // Audit events table
-                    db.run(`
+                        // Audit events table
+                        db.run(`
             CREATE TABLE IF NOT EXISTS audit_events (
               id TEXT PRIMARY KEY,
               userId TEXT NOT NULL,
@@ -89,8 +109,8 @@ export function initializeDatabase() {
               FOREIGN KEY(userId) REFERENCES users(id) ON DELETE CASCADE
             )
           `);
-                    // Signatures table
-                    db.run(`
+                        // Signatures table
+                        db.run(`
             CREATE TABLE IF NOT EXISTS signatures (
               id TEXT PRIMARY KEY,
               userId TEXT NOT NULL,
@@ -103,8 +123,8 @@ export function initializeDatabase() {
               FOREIGN KEY(userId) REFERENCES users(id) ON DELETE CASCADE
             )
           `);
-                    // Sync queue table (for offline-first Phase 2)
-                    db.run(`
+                        // Sync queue table (for offline-first Phase 2)
+                        db.run(`
             CREATE TABLE IF NOT EXISTS sync_queue (
               id TEXT PRIMARY KEY,
               userId TEXT NOT NULL,
@@ -117,36 +137,43 @@ export function initializeDatabase() {
               FOREIGN KEY(userId) REFERENCES users(id) ON DELETE CASCADE
             )
           `);
-                    // Create indices for common queries
-                    db.run('CREATE INDEX IF NOT EXISTS idx_contacts_userId ON contacts(userId)');
-                    db.run('CREATE INDEX IF NOT EXISTS idx_tasks_userId ON tasks(userId)');
-                    db.run('CREATE INDEX IF NOT EXISTS idx_shift_sessions_userId ON shift_sessions(userId)');
-                    db.run('CREATE INDEX IF NOT EXISTS idx_audit_events_userId ON audit_events(userId)');
-                    db.run('CREATE INDEX IF NOT EXISTS idx_signatures_userId ON signatures(userId)');
-                    db.run('CREATE INDEX IF NOT EXISTS idx_sync_queue_userId ON sync_queue(userId)');
-                    db.run('CREATE INDEX IF NOT EXISTS idx_sync_queue_synced ON sync_queue(synced)', () => {
-                        // Seed a test user for development/testing
-                        const userId = 'user123';
-                        const passwordHash = bcrypt.hashSync('Password123', 10);
-                        db.run(`INSERT OR IGNORE INTO users (id, firstName, lastName, email, passwordHash, preferredShift) 
+                        // Create indices for common queries
+                        db.run('CREATE INDEX IF NOT EXISTS idx_contacts_userId ON contacts(userId)');
+                        db.run('CREATE INDEX IF NOT EXISTS idx_tasks_userId ON tasks(userId)');
+                        db.run('CREATE INDEX IF NOT EXISTS idx_shift_sessions_userId ON shift_sessions(userId)');
+                        db.run('CREATE INDEX IF NOT EXISTS idx_audit_events_userId ON audit_events(userId)');
+                        db.run('CREATE INDEX IF NOT EXISTS idx_signatures_userId ON signatures(userId)');
+                        db.run('CREATE INDEX IF NOT EXISTS idx_sync_queue_userId ON sync_queue(userId)');
+                        db.run('CREATE INDEX IF NOT EXISTS idx_sync_queue_synced ON sync_queue(synced)', () => {
+                            // Seed a test user for development/testing
+                            const userId = 'user123';
+                            const passwordHash = bcrypt.hashSync('Password123', 10);
+                            db.run(`INSERT OR IGNORE INTO users (id, firstName, lastName, email, passwordHash, preferredShift) 
                VALUES (?, ?, ?, ?, ?, ?)`, [userId, 'Test', 'User', 'test@example.com', passwordHash, 'morning'], (err) => {
-                            if (err) {
-                                reject(err);
-                            }
-                            else {
-                                db.run(`UPDATE users SET passwordHash = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`, [passwordHash, userId], (updateErr) => {
-                                    if (updateErr) {
-                                        reject(updateErr);
-                                    }
-                                    else {
-                                        resolve(db);
-                                    }
-                                });
-                            }
+                                if (err) {
+                                    reject(err);
+                                }
+                                else {
+                                    db.run(`UPDATE users SET passwordHash = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`, [passwordHash, userId], (updateErr) => {
+                                        if (updateErr) {
+                                            reject(updateErr);
+                                        }
+                                        else {
+                                            resolve(db);
+                                        }
+                                    });
+                                }
+                            });
                         });
                     });
-                });
-            }
+                }
+            });
+        };
+        // First try the resolved filesystem path.
+        tryOpen(dbPath, (firstErr) => {
+            // On serverless providers this can fail if filesystem is restricted.
+            console.warn(`Primary SQLite path failed (${dbPath}). Falling back to in-memory DB.`, firstErr.message);
+            tryOpen(':memory:');
         });
     });
 }

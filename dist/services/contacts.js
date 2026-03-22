@@ -3,6 +3,7 @@ import { randomUUID } from 'crypto';
  * Contact service: CRUD operations and queries
  */
 export class ContactService {
+    db;
     constructor(db) {
         this.db = db;
     }

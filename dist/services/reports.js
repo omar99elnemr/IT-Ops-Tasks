@@ -5,6 +5,9 @@ import { TaskService } from './tasks.js';
  * Based on Phase 0 email template specification
  */
 export class ReportService {
+    db;
+    contactService;
+    taskService;
     constructor(db) {
         this.db = db;
         this.contactService = new ContactService(db);

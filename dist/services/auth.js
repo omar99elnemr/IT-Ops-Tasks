@@ -2,6 +2,8 @@ import { randomUUID } from 'crypto';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 export class AuthService {
+    db;
+    jwtSecret;
     constructor(db, jwtSecret) {
         this.db = db;
         this.jwtSecret = jwtSecret;

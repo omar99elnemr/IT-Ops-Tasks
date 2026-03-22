@@ -116,8 +116,10 @@ async function startServer() {
                 },
             });
         });
-        app.listen(PORT, () => {
-            console.log(`
+        // Only listen locally (not in serverless/production)
+        if (process.env.NODE_ENV !== 'production') {
+            app.listen(PORT, () => {
+                console.log(`
 ╔═══════════════════════════════════════════════════════════╗
 ║  IT Operations - Phase 1 Backend Server                   ║
 ╠═══════════════════════════════════════════════════════════╣
@@ -136,16 +138,19 @@ async function startServer() {
 ║    - POST /api/reports/generate                           ║
 ║    - GET /api/reports/preview                             ║
 ╚═══════════════════════════════════════════════════════════╝
-      `);
-        });
+        `);
+            });
+        }
     }
     catch (error) {
         console.error('✗ Failed to initialize database:', error);
-        process.exit(1);
+        if (process.env.NODE_ENV !== 'production') {
+            process.exit(1);
+        }
     }
 }
 // Export for serverless environments (Vercel, etc.)
 export default app;
-// Call startServer() and listen locally if not in serverless mode
-startServer().catch(console.error);
+// Initialize startup (will run database setup and listen locally if not production)
+await startServer();
 //# sourceMappingURL=server.js.map

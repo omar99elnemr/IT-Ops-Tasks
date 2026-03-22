@@ -3,6 +3,7 @@ import { randomUUID } from 'crypto';
  * Task service: CRUD operations and status management
  */
 export class TaskService {
+    db;
     constructor(db) {
         this.db = db;
     }
