@@ -37,12 +37,12 @@ export declare const ContactSchemas: {
         email: z.ZodString;
         role: z.ZodDefault<z.ZodEnum<["to", "cc", "none"]>>;
     }, "strip", z.ZodTypeAny, {
-        name: string;
         email: string;
+        name: string;
         role: "to" | "cc" | "none";
     }, {
-        name: string;
         email: string;
+        name: string;
         role?: "to" | "cc" | "none" | undefined;
     }>;
     update: z.ZodObject<{
@@ -50,12 +50,12 @@ export declare const ContactSchemas: {
         email: z.ZodOptional<z.ZodString>;
         role: z.ZodOptional<z.ZodEnum<["to", "cc", "none"]>>;
     }, "strip", z.ZodTypeAny, {
-        name?: string | undefined;
         email?: string | undefined;
+        name?: string | undefined;
         role?: "to" | "cc" | "none" | undefined;
     }, {
-        name?: string | undefined;
         email?: string | undefined;
+        name?: string | undefined;
         role?: "to" | "cc" | "none" | undefined;
     }>;
 };

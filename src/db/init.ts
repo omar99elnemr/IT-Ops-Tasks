@@ -1,7 +1,7 @@
 import sqlite3 from 'sqlite3';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { randomUUID } from 'crypto';
+import bcrypt from 'bcryptjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const dbPath = path.join(__dirname, '../../data/it-ops.db');
@@ -136,11 +136,12 @@ export function initializeDatabase(): Promise<sqlite3.Database> {
           db.run('CREATE INDEX IF NOT EXISTS idx_sync_queue_synced ON sync_queue(synced)', () => {
             // Seed a test user for development/testing
             const userId = 'user123';
+            const passwordHash = bcrypt.hashSync('Password123', 10);
             
             db.run(
               `INSERT OR IGNORE INTO users (id, firstName, lastName, email, passwordHash, preferredShift) 
                VALUES (?, ?, ?, ?, ?, ?)`,
-              [userId, 'Test', 'User', 'test@example.com', 'hashed_password_placeholder', 'morning'],
+              [userId, 'Test', 'User', 'test@example.com', passwordHash, 'morning'],
               (err) => {
                 if (err) {
                   reject(err);

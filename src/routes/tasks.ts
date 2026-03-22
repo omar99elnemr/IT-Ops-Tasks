@@ -10,11 +10,7 @@ export function createTaskRoutes(db: Database): Router {
   const taskService = new TaskService(db);
   const auditService = new AuditService(db);
 
-  // Mock user extraction from request
-  const getUserId = (req: Request): string => {
-    const userId = (req.headers['x-user-id'] as string) || 'default-user';
-    return userId;
-  };
+  const getUserId = (req: Request): string => req.userId as string;
 
   const getRequestContext = (req: Request) => ({
     ipAddress: req.ip || undefined,

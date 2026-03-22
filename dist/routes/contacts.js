@@ -6,11 +6,7 @@ export function createContactRoutes(db) {
     const router = Router();
     const contactService = new ContactService(db);
     const auditService = new AuditService(db);
-    // Mock user extraction from request (will be replaced with JWT auth in Phase 1d)
-    const getUserId = (req) => {
-        const userId = req.headers['x-user-id'] || 'default-user';
-        return userId;
-    };
+    const getUserId = (req) => req.userId;
     const getRequestContext = (req) => ({
         ipAddress: req.ip || undefined,
         userAgent: req.get('user-agent') || undefined,

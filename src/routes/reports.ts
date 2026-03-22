@@ -7,11 +7,7 @@ export function createReportRoutes(db: Database): Router {
   const router = Router();
   const reportService = new ReportService(db);
 
-  // Mock user extraction from request
-  const getUserId = (req: Request): string => {
-    const userId = (req.headers['x-user-id'] as string) || 'default-user';
-    return userId;
-  };
+  const getUserId = (req: Request): string => req.userId as string;
 
   /**
    * POST /api/reports/generate - Generate handover report

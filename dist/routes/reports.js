@@ -3,11 +3,7 @@ import { ReportService } from '../services/reports.js';
 export function createReportRoutes(db) {
     const router = Router();
     const reportService = new ReportService(db);
-    // Mock user extraction from request
-    const getUserId = (req) => {
-        const userId = req.headers['x-user-id'] || 'default-user';
-        return userId;
-    };
+    const getUserId = (req) => req.userId;
     /**
      * POST /api/reports/generate - Generate handover report
      *

@@ -1,11 +1,14 @@
 import express from 'express';
 import cors from 'cors';
 import { initializeDatabase } from './db/init.js';
+import { createAuthMiddleware } from './middleware/auth.js';
+import { createAuthRoutes } from './routes/auth.js';
 import { createContactRoutes } from './routes/contacts.js';
 import { createTaskRoutes } from './routes/tasks.js';
 import { createReportRoutes } from './routes/reports.js';
 const app = express();
 const PORT = process.env.PORT || 3000;
+const JWT_SECRET = process.env.JWT_SECRET || 'dev-jwt-secret-change-me';
 // ============================================================================
 // MIDDLEWARE (before routes)
 // ============================================================================
@@ -62,10 +65,13 @@ async function startServer() {
             req.db = db;
             next();
         });
+        const requireAuth = createAuthMiddleware(JWT_SECRET);
+        // Public auth routes
+        app.use('/api/auth', createAuthRoutes(db, JWT_SECRET));
         // Register API routes BEFORE error handlers
-        app.use('/api/contacts', createContactRoutes(db));
-        app.use('/api/tasks', createTaskRoutes(db));
-        app.use('/api/reports', createReportRoutes(db));
+        app.use('/api/contacts', requireAuth, createContactRoutes(db));
+        app.use('/api/tasks', requireAuth, createTaskRoutes(db));
+        app.use('/api/reports', requireAuth, createReportRoutes(db));
         // ============================================================================
         // ERROR HANDLERS (after routes)
         // ============================================================================
@@ -99,6 +105,8 @@ async function startServer() {
 ║  Health check: /health                                    ║
 ║  API status: /api/status                                  ║
 ║  API routes (Phase 1c):                                   ║
+║    - POST /api/auth/register                              ║
+║    - POST /api/auth/login                                 ║
 ║    - POST /api/contacts                                   ║
 ║    - GET /api/contacts, /api/contacts/:id                 ║
 ║    - POST /api/tasks                                      ║
