@@ -1,10 +1,29 @@
 import sqlite3 from 'sqlite3';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import bcrypt from 'bcryptjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const dbPath = path.join(__dirname, '../../data/it-ops.db');
+
+function resolveDatabasePath(): string {
+  if (process.env.DATABASE_PATH) {
+    return process.env.DATABASE_PATH;
+  }
+
+  // Vercel/serverless file systems are read-only except /tmp.
+  if (process.env.VERCEL || process.env.NODE_ENV === 'production') {
+    return '/tmp/it-ops.db';
+  }
+
+  const localDataDir = path.join(__dirname, '../../data');
+  if (!fs.existsSync(localDataDir)) {
+    fs.mkdirSync(localDataDir, { recursive: true });
+  }
+  return path.join(localDataDir, 'it-ops.db');
+}
+
+const dbPath = resolveDatabasePath();
 
 /**
  * Initialize SQLite database with schema
