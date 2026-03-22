@@ -3,18 +3,13 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const dbPath = path.join(__dirname, '../../data/it-ops.db');
-let db = null;
 /**
  * Initialize SQLite database with schema
  * Based on Phase 0 baseline domain model
  */
 export function initializeDatabase() {
     return new Promise((resolve, reject) => {
-        if (db) {
-            resolve(db);
-            return;
-        }
-        db = new sqlite3.Database(dbPath, (err) => {
+        const db = new sqlite3.Database(dbPath, (err) => {
             if (err) {
                 reject(err);
             }
@@ -140,17 +135,5 @@ export function initializeDatabase() {
             }
         });
     });
-}
-export function getDatabase() {
-    if (!db) {
-        throw new Error('Database not initialized. Call initializeDatabase() first.');
-    }
-    return db;
-}
-export function closeDatabase() {
-    if (db) {
-        db.close();
-        db = null;
-    }
 }
 //# sourceMappingURL=init.js.map

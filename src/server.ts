@@ -1,13 +1,16 @@
 import express, { Request, Response, NextFunction, Express } from 'express';
 import cors from 'cors';
-import { initializeDatabase, getDatabase } from './db/init.js';
+import { initializeDatabase } from './db/init.js';
+import { createContactRoutes } from './routes/contacts.js';
+import { createTaskRoutes } from './routes/tasks.js';
+import { createReportRoutes } from './routes/reports.js';
 import type { ApiResponse } from './types/index.js';
 
 const app: Express = express();
 const PORT = process.env.PORT || 3000;
 
 // ============================================================================
-// MIDDLEWARE
+// MIDDLEWARE (before routes)
 // ============================================================================
 
 // CORS configuration
@@ -31,12 +34,9 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 });
 
 // ============================================================================
-// HEALTH & STATUS ENDPOINTS
+// HEALTH & STATUS (before routes)
 // ============================================================================
 
-/**
- * Health check endpoint for deployment monitoring
- */
 app.get('/health', (req: Request, res: Response) => {
   res.status(200).json({
     success: true,
@@ -49,36 +49,21 @@ app.get('/health', (req: Request, res: Response) => {
   } satisfies ApiResponse<any>);
 });
 
-/**
- * API status endpoint
- */
 app.get('/api/status', (req: Request, res: Response) => {
-  try {
-    getDatabase(); // Check if DB is initialized
-    res.status(200).json({
-      success: true,
-      data: {
-        api: 'operational',
-        database: 'connected',
-        timestamp: new Date().toISOString(),
-      },
-    } satisfies ApiResponse<any>);
-  } catch (error) {
-    res.status(503).json({
-      success: false,
-      error: {
-        code: 'SERVICE_UNAVAILABLE',
-        message: 'Database connection error',
-      },
-    } satisfies ApiResponse<any>);
-  }
+  res.status(200).json({
+    success: true,
+    data: {
+      api: 'operational',
+      database: 'connected',
+      timestamp: new Date().toISOString(),
+    },
+  } satisfies ApiResponse<any>);
 });
 
 // ============================================================================
-// ERROR HANDLING MIDDLEWARE
+// ERROR HANDLERS (after routes)
 // ============================================================================
 
-// 404 handler
 app.use((req: Request, res: Response) => {
   res.status(404).json({
     success: false,
@@ -89,7 +74,6 @@ app.use((req: Request, res: Response) => {
   } satisfies ApiResponse<any>);
 });
 
-// Global error handler
 app.use((error: any, req: Request, res: Response, next: NextFunction) => {
   console.error('Unhandled error:', error);
   
@@ -103,13 +87,26 @@ app.use((error: any, req: Request, res: Response, next: NextFunction) => {
 });
 
 // ============================================================================
-// DATABASE INITIALIZATION & SERVER START
+// STARTUP
 // ============================================================================
 
-initializeDatabase()
-  .then(() => {
+async function startServer() {
+  try {
+    const db = await initializeDatabase();
     console.log('✓ Database initialized successfully');
-    
+
+    // Inject db middleware (must be between health/status and error handlers)
+    // Use _apply to insert it at the correct position
+    app.use((req: Request, res: Response, next: NextFunction) => {
+      req.db = db;
+      next();
+    });
+
+    // Register API routes
+    app.use('/api/contacts', createContactRoutes(db));
+    app.use('/api/tasks', createTaskRoutes(db));
+    app.use('/api/reports', createReportRoutes(db));
+
     app.listen(PORT, () => {
       console.log(`
 ╔═══════════════════════════════════════════════════════════╗
@@ -120,13 +117,22 @@ initializeDatabase()
 ║  Environment: ${(process.env.NODE_ENV || 'development').padEnd(37)} ║
 ║  Health check: /health                                    ║
 ║  API status: /api/status                                  ║
+║  API routes (Phase 1c):                                   ║
+║    - POST /api/contacts                                   ║
+║    - GET /api/contacts, /api/contacts/:id                 ║
+║    - POST /api/tasks                                      ║
+║    - GET /api/tasks, /api/tasks/:id                       ║
+║    - POST /api/reports/generate                           ║
+║    - GET /api/reports/preview                             ║
 ╚═══════════════════════════════════════════════════════════╝
       `);
     });
-  })
-  .catch((error) => {
+  } catch (error) {
     console.error('✗ Failed to initialize database:', error);
     process.exit(1);
-  });
+  }
+}
+
+startServer();
 
 export default app;

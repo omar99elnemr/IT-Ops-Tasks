@@ -5,28 +5,21 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const dbPath = path.join(__dirname, '../../data/it-ops.db');
 
-let db: sqlite3.Database | null = null;
-
 /**
  * Initialize SQLite database with schema
  * Based on Phase 0 baseline domain model
  */
 export function initializeDatabase(): Promise<sqlite3.Database> {
   return new Promise((resolve, reject) => {
-    if (db) {
-      resolve(db);
-      return;
-    }
-
-    db = new sqlite3.Database(dbPath, (err) => {
+    const db = new sqlite3.Database(dbPath, (err) => {
       if (err) {
         reject(err);
       } else {
-        db!.serialize(() => {
-          db!.run('PRAGMA foreign_keys = ON');
+        db.serialize(() => {
+          db.run('PRAGMA foreign_keys = ON');
 
           // Users table
-          db!.run(`
+          db.run(`
             CREATE TABLE IF NOT EXISTS users (
               id TEXT PRIMARY KEY,
               firstName TEXT NOT NULL,
@@ -41,7 +34,7 @@ export function initializeDatabase(): Promise<sqlite3.Database> {
           `);
 
           // Contacts table
-          db!.run(`
+          db.run(`
             CREATE TABLE IF NOT EXISTS contacts (
               id TEXT PRIMARY KEY,
               userId TEXT NOT NULL,
@@ -56,7 +49,7 @@ export function initializeDatabase(): Promise<sqlite3.Database> {
           `);
 
           // Tasks table (fixed and dynamic)
-          db!.run(`
+          db.run(`
             CREATE TABLE IF NOT EXISTS tasks (
               id TEXT PRIMARY KEY,
               userId TEXT NOT NULL,
@@ -73,7 +66,7 @@ export function initializeDatabase(): Promise<sqlite3.Database> {
           `);
 
           // Shift sessions table
-          db!.run(`
+          db.run(`
             CREATE TABLE IF NOT EXISTS shift_sessions (
               id TEXT PRIMARY KEY,
               userId TEXT NOT NULL,
@@ -87,7 +80,7 @@ export function initializeDatabase(): Promise<sqlite3.Database> {
           `);
 
           // Audit events table
-          db!.run(`
+          db.run(`
             CREATE TABLE IF NOT EXISTS audit_events (
               id TEXT PRIMARY KEY,
               userId TEXT NOT NULL,
@@ -103,7 +96,7 @@ export function initializeDatabase(): Promise<sqlite3.Database> {
           `);
 
           // Signatures table
-          db!.run(`
+          db.run(`
             CREATE TABLE IF NOT EXISTS signatures (
               id TEXT PRIMARY KEY,
               userId TEXT NOT NULL,
@@ -118,7 +111,7 @@ export function initializeDatabase(): Promise<sqlite3.Database> {
           `);
 
           // Sync queue table (for offline-first Phase 2)
-          db!.run(`
+          db.run(`
             CREATE TABLE IF NOT EXISTS sync_queue (
               id TEXT PRIMARY KEY,
               userId TEXT NOT NULL,
@@ -133,36 +126,22 @@ export function initializeDatabase(): Promise<sqlite3.Database> {
           `);
 
           // Create indices for common queries
-          db!.run('CREATE INDEX IF NOT EXISTS idx_contacts_userId ON contacts(userId)');
-          db!.run('CREATE INDEX IF NOT EXISTS idx_tasks_userId ON tasks(userId)');
-          db!.run('CREATE INDEX IF NOT EXISTS idx_shift_sessions_userId ON shift_sessions(userId)');
-          db!.run('CREATE INDEX IF NOT EXISTS idx_audit_events_userId ON audit_events(userId)');
-          db!.run('CREATE INDEX IF NOT EXISTS idx_signatures_userId ON signatures(userId)');
-          db!.run('CREATE INDEX IF NOT EXISTS idx_sync_queue_userId ON sync_queue(userId)');
-          db!.run('CREATE INDEX IF NOT EXISTS idx_sync_queue_synced ON sync_queue(synced)', (err) => {
+          db.run('CREATE INDEX IF NOT EXISTS idx_contacts_userId ON contacts(userId)');
+          db.run('CREATE INDEX IF NOT EXISTS idx_tasks_userId ON tasks(userId)');
+          db.run('CREATE INDEX IF NOT EXISTS idx_shift_sessions_userId ON shift_sessions(userId)');
+          db.run('CREATE INDEX IF NOT EXISTS idx_audit_events_userId ON audit_events(userId)');
+          db.run('CREATE INDEX IF NOT EXISTS idx_signatures_userId ON signatures(userId)');
+          db.run('CREATE INDEX IF NOT EXISTS idx_sync_queue_userId ON sync_queue(userId)');
+          db.run('CREATE INDEX IF NOT EXISTS idx_sync_queue_synced ON sync_queue(synced)', (err) => {
             if (err) {
               reject(err);
             } else {
-              resolve(db!);
+              resolve(db);
             }
           });
         });
       }
     });
   });
-}
-
-export function getDatabase(): sqlite3.Database {
-  if (!db) {
-    throw new Error('Database not initialized. Call initializeDatabase() first.');
-  }
-  return db;
-}
-
-export function closeDatabase(): void {
-  if (db) {
-    db.close();
-    db = null;
-  }
 }
 
