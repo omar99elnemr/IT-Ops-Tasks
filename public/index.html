@@ -105,6 +105,9 @@
                         <input type="checkbox" id="timeRecordingEnabled" style="width: auto; margin-right: 8px;">
                         <label for="timeRecordingEnabled" style="font-size: 0.9em; color:#444;">Enable automatic time recording</label>
                     </div>
+                    <div style="margin-top: 12px;">
+                        <button id="resetExceptContactsBtn" class="btn-danger" type="button">Reset Everything Except Contacts</button>
+                    </div>
                 </div>
 
                 <div class="card">
@@ -191,18 +194,22 @@
             // NEW STORAGE KEY: Bypasses ANY corrupted data currently sitting in your phone browser!
             const STORAGE_KEY = 'itOpsState_PRO_V1';
 
+            function getDefaultFixedTasks() {
+                return [
+                    { id: 1, title: 'Checked all IDF rooms', done: false, time: null },
+                    { id: 2, title: 'Checked IPTV Channels', done: false, time: null },
+                    { id: 3, title: 'Checked All Hosts Health & Storage', done: false, time: null },
+                    { id: 4, title: 'Checked Landline', done: false, time: null }
+                ];
+            }
+
             // Base State
             let state = {
                 userName: '',
                 shift: 'Morning (09:00 - 17:00)',
                 timeRecordingEnabled: true,
                 contacts: [],
-                fixedTasks: [
-                    { id: 1, title: 'Checked all IDF rooms', done: false, time: null },
-                    { id: 2, title: 'Checked IPTV Channels', done: false, time: null },
-                    { id: 3, title: 'Checked All Hosts Health & Storage', done: false, time: null },
-                    { id: 4, title: 'Checked Landline', done: false, time: null }
-                ],
+                fixedTasks: getDefaultFixedTasks(),
                 dynamicTasks: []
             };
 
@@ -653,6 +660,40 @@
                 el('newTaskDesc').value = ''; saveState(); renderDynamicTasks();
             }
 
+            async function cmdResetExceptContacts() {
+                const confirmed = await showConfirmDialog(
+                    'This will reset your name, shift, date, tasks, and time settings. Contacts will be kept. Continue?',
+                    'Reset Application Data'
+                );
+                if (!confirmed) return;
+
+                const preservedContacts = Array.isArray(state.contacts) ? state.contacts : [];
+                state = {
+                    userName: '',
+                    shift: 'Morning (09:00 - 17:00)',
+                    timeRecordingEnabled: true,
+                    contacts: preservedContacts,
+                    fixedTasks: getDefaultFixedTasks(),
+                    dynamicTasks: []
+                };
+
+                if (el('newFixedTaskInput')) el('newFixedTaskInput').value = '';
+                if (el('newTaskDesc')) el('newTaskDesc').value = '';
+                if (el('newTaskStatus')) el('newTaskStatus').value = 'Completed';
+                if (el('reportContainer')) el('reportContainer').style.display = 'none';
+
+                if (el('userName')) el('userName').value = state.userName;
+                if (el('shiftSelect')) el('shiftSelect').value = state.shift;
+                if (el('datePicker')) el('datePicker').valueAsDate = new Date();
+                if (el('timeRecordingEnabled')) el('timeRecordingEnabled').checked = state.timeRecordingEnabled;
+
+                saveState();
+                renderContacts();
+                renderFixedTasks();
+                renderDynamicTasks();
+                showAppMessage('Application data reset. Contacts were preserved.', 'success');
+            }
+
             // === EMAILS & VIEWS ===
             function generateEmailHTML() {
                 const d = el('datePicker').valueAsDate || new Date();
@@ -711,6 +752,7 @@
                 el('addContactBtn').addEventListener('click', cmdAddContact);
                 el('addFixedTaskBtn').addEventListener('click', cmdAddFixedTask);
                 el('addDynamicTaskBtn').addEventListener('click', cmdAddDynamicTask);
+                el('resetExceptContactsBtn').addEventListener('click', cmdResetExceptContacts);
 
                 // Reports
                 el('generateReportBtn').addEventListener('click', () => {
