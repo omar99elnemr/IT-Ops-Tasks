@@ -75,9 +75,12 @@ app.get('/api/status', (req, res) => {
 // ============================================================================
 // STARTUP
 // ============================================================================
+// Store db globally for serverless handler access
+let globalDb = null;
 async function startServer() {
     try {
         const db = await initializeDatabase();
+        globalDb = db;
         console.log('✓ Database initialized successfully');
         // Inject db middleware
         app.use((req, res, next) => {
@@ -141,6 +144,8 @@ async function startServer() {
         process.exit(1);
     }
 }
-startServer();
+// Export for serverless environments (Vercel, etc.)
 export default app;
+// Call startServer() and listen locally if not in serverless mode
+startServer().catch(console.error);
 //# sourceMappingURL=server.js.map

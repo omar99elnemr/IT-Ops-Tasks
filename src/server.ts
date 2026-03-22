@@ -3,6 +3,7 @@ import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { randomUUID } from 'crypto';
+import sqlite3 from 'sqlite3';
 import { initializeDatabase } from './db/init.js';
 import { createAuthMiddleware } from './middleware/auth.js';
 import { createAuthRoutes } from './routes/auth.js';
@@ -89,9 +90,13 @@ app.get('/api/status', (req: Request, res: Response) => {
 // STARTUP
 // ============================================================================
 
+// Store db globally for serverless handler access
+let globalDb: sqlite3.Database | null = null;
+
 async function startServer() {
   try {
     const db = await initializeDatabase();
+    globalDb = db;
     console.log('✓ Database initialized successfully');
 
     // Inject db middleware
@@ -164,6 +169,8 @@ async function startServer() {
   }
 }
 
-startServer();
-
+// Export for serverless environments (Vercel, etc.)
 export default app;
+
+// Call startServer() and listen locally if not in serverless mode
+startServer().catch(console.error);
