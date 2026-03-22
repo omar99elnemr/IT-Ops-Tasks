@@ -1,8 +1,10 @@
 {
   "buildCommand": "npm run build",
   "installCommand": "npm install",
-  "outputDirectory": ".",
-  "public": "public"
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/api/handler" }
+  ]
 }
+
 
 
