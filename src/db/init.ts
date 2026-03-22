@@ -146,7 +146,17 @@ export function initializeDatabase(): Promise<sqlite3.Database> {
                 if (err) {
                   reject(err);
                 } else {
-                  resolve(db);
+                  db.run(
+                    `UPDATE users SET passwordHash = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
+                    [passwordHash, userId],
+                    (updateErr) => {
+                      if (updateErr) {
+                        reject(updateErr);
+                      } else {
+                        resolve(db);
+                      }
+                    }
+                  );
                 }
               }
             );

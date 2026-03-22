@@ -134,7 +134,14 @@ export function initializeDatabase() {
                                 reject(err);
                             }
                             else {
-                                resolve(db);
+                                db.run(`UPDATE users SET passwordHash = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`, [passwordHash, userId], (updateErr) => {
+                                    if (updateErr) {
+                                        reject(updateErr);
+                                    }
+                                    else {
+                                        resolve(db);
+                                    }
+                                });
                             }
                         });
                     });
