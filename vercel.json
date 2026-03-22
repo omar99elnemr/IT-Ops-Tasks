@@ -1,10 +1,19 @@
 {
   "buildCommand": "npm run build",
-  "installCommand": "npm install",
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/api/handler" }
+  "installCommand": "npm ci",
+  "env": {
+    "NODE_ENV": "production"
+  },
+  "functions": {
+    "api/**/*.js": {
+      "runtime": "nodejs18.x"
+    }
+  },
+  "routes": [
+    { "src": "/(.*)", "dest": "/api/handler" }
   ]
 }
+
 
 
 

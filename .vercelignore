@@ -1,8 +1,11 @@
 node_modules/
 src/
-tsconfig.json
-.git/
-.gitignore
-*.md
 scripts/
 data/
+*.md
+.git/
+.gitignore
+tsconfig.json
+public/index.html
+public/app.jsx
+
