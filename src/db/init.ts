@@ -31,10 +31,15 @@ const dbPath = resolveDatabasePath();
  */
 export function initializeDatabase(): Promise<sqlite3.Database> {
   return new Promise((resolve, reject) => {
-    const db = new sqlite3.Database(dbPath, (err) => {
-      if (err) {
-        reject(err);
-      } else {
+    const tryOpen = (candidatePath: string, onFailure?: (err: Error) => void) => {
+      const db = new sqlite3.Database(candidatePath, (err) => {
+        if (err) {
+          if (onFailure) {
+            onFailure(err);
+            return;
+          }
+          reject(err);
+        } else {
         db.serialize(() => {
           db.run('PRAGMA foreign_keys = ON');
 
@@ -181,7 +186,15 @@ export function initializeDatabase(): Promise<sqlite3.Database> {
             );
           });
         });
-      }
+        }
+      });
+    };
+
+    // First try the resolved filesystem path.
+    tryOpen(dbPath, (firstErr) => {
+      // On serverless providers this can fail if filesystem is restricted.
+      console.warn(`Primary SQLite path failed (${dbPath}). Falling back to in-memory DB.`, firstErr.message);
+      tryOpen(':memory:');
     });
   });
 }
