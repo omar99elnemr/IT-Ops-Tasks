@@ -1,11 +1,6 @@
 node_modules/
-src/
-scripts/
 data/
 *.md
 .git/
 .gitignore
-tsconfig.json
-public/index.html
-public/app.jsx
 
