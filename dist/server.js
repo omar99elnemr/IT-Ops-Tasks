@@ -51,44 +51,43 @@ app.get('/api/status', (req, res) => {
     });
 });
 // ============================================================================
-// ERROR HANDLERS (after routes)
-// ============================================================================
-app.use((req, res) => {
-    res.status(404).json({
-        success: false,
-        error: {
-            code: 'NOT_FOUND',
-            message: `Endpoint ${req.method} ${req.path} not found`,
-        },
-    });
-});
-app.use((error, req, res, next) => {
-    console.error('Unhandled error:', error);
-    res.status(error.status || 500).json({
-        success: false,
-        error: {
-            code: error.code || 'INTERNAL_SERVER_ERROR',
-            message: error.message || 'An unexpected error occurred',
-        },
-    });
-});
-// ============================================================================
 // STARTUP
 // ============================================================================
 async function startServer() {
     try {
         const db = await initializeDatabase();
         console.log('✓ Database initialized successfully');
-        // Inject db middleware (must be between health/status and error handlers)
-        // Use _apply to insert it at the correct position
+        // Inject db middleware
         app.use((req, res, next) => {
             req.db = db;
             next();
         });
-        // Register API routes
+        // Register API routes BEFORE error handlers
         app.use('/api/contacts', createContactRoutes(db));
         app.use('/api/tasks', createTaskRoutes(db));
         app.use('/api/reports', createReportRoutes(db));
+        // ============================================================================
+        // ERROR HANDLERS (after routes)
+        // ============================================================================
+        app.use((req, res) => {
+            res.status(404).json({
+                success: false,
+                error: {
+                    code: 'NOT_FOUND',
+                    message: `Endpoint ${req.method} ${req.path} not found`,
+                },
+            });
+        });
+        app.use((error, req, res, next) => {
+            console.error('Unhandled error:', error);
+            res.status(error.status || 500).json({
+                success: false,
+                error: {
+                    code: error.code || 'INTERNAL_SERVER_ERROR',
+                    message: error.message || 'An unexpected error occurred',
+                },
+            });
+        });
         app.listen(PORT, () => {
             console.log(`
 ╔═══════════════════════════════════════════════════════════╗

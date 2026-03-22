@@ -123,13 +123,18 @@ export function initializeDatabase() {
                     db.run('CREATE INDEX IF NOT EXISTS idx_audit_events_userId ON audit_events(userId)');
                     db.run('CREATE INDEX IF NOT EXISTS idx_signatures_userId ON signatures(userId)');
                     db.run('CREATE INDEX IF NOT EXISTS idx_sync_queue_userId ON sync_queue(userId)');
-                    db.run('CREATE INDEX IF NOT EXISTS idx_sync_queue_synced ON sync_queue(synced)', (err) => {
-                        if (err) {
-                            reject(err);
-                        }
-                        else {
-                            resolve(db);
-                        }
+                    db.run('CREATE INDEX IF NOT EXISTS idx_sync_queue_synced ON sync_queue(synced)', () => {
+                        // Seed a test user for development/testing
+                        const userId = 'user123';
+                        db.run(`INSERT OR IGNORE INTO users (id, firstName, lastName, email, passwordHash, preferredShift) 
+               VALUES (?, ?, ?, ?, ?, ?)`, [userId, 'Test', 'User', 'test@example.com', 'hashed_password_placeholder', 'morning'], (err) => {
+                            if (err) {
+                                reject(err);
+                            }
+                            else {
+                                resolve(db);
+                            }
+                        });
                     });
                 });
             }
