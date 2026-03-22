@@ -144,9 +144,20 @@ async function startServer() {
     }
     catch (error) {
         console.error('✗ Failed to initialize database:', error);
-        if (process.env.NODE_ENV !== 'production') {
-            process.exit(1);
-        }
+        // Add fallback route to report the error instead of 404ing
+        app.use('/api', (req, res) => {
+            res.status(500).json({
+                success: false,
+                error: {
+                    code: 'INITIALIZATION_FAILED',
+                    message: 'Server failed to start database',
+                    details: error instanceof Error ? error.message : String(error)
+                }
+            });
+        });
+        // In serverless, if we don't exit, the instance stays alive but broken.
+        // We must exit so Vercel spins up a fresh instance next time.
+        process.exit(1);
     }
 }
 // Export for serverless environments (Vercel, etc.)
