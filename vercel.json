@@ -3,10 +3,7 @@
   "installCommand": "npm ci",
   "env": {
     "NODE_ENV": "production"
-  },
-  "routes": [
-    { "src": "/(.*)", "dest": "/api/handler" }
-  ]
+  }
 }
 
 
